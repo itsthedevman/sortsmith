@@ -14,6 +14,6 @@ class TestByKey < Minitest::Test
   end
 
   def test_it_sorts_by_key
-    assert_equal(@sorter.sort, [{key: "Foo"}, {key: "bar"}, {key: "foo"}])
+    assert_equal([{key: "Foo"}, {key: "bar"}, {key: "foo"}], @sorter.sort)
   end
 end

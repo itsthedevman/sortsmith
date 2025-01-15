@@ -17,12 +17,12 @@ class TestByMethod < Minitest::Test
 
   def test_it_sorts_by_method
     assert_equal(
-      @sorter.sort,
       [
         @object.new(key: "Foo"),
         @object.new(key: "bar"),
         @object.new(key: "foo")
-      ]
+      ],
+      @sorter.sort
     )
   end
 end

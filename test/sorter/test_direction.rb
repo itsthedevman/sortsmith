@@ -9,10 +9,10 @@ class TestSimpleSort < Minitest::Test
   end
 
   def test_it_sorts_asc
-    assert_equal(@sorter.sort, ["a", "b", "c", "d"])
+    assert_equal(["a", "b", "c", "d"], @sorter.sort)
   end
 
   def test_it_sorts_desc
-    assert_equal(@sorter.desc.sort, ["d", "c", "b", "a"])
+    assert_equal(["d", "c", "b", "a"], @sorter.desc.sort)
   end
 end
