@@ -20,12 +20,7 @@ module Sortsmith
     #
     def sort
       filter_steps = select_filter_steps
-
-      transformation_steps = [
-        # Transforms the item to a string immediately after filtering
-        transform_to_string,
-        *select_transformation_steps
-      ]
+      transformation_steps = select_transformation_steps
 
       result =
         @enumerable.sort do |left, right|
@@ -34,12 +29,18 @@ module Sortsmith
             right = step.perform(right)
           end
 
-          transformation_steps.each do |step|
-            left = step.perform(left)
-            right = step.perform(right)
-          end
+          left_priority = type_priority(left)
+          right_priority = type_priority(right)
 
-          left <=> right
+          # Apply the transformation pipeline only for same-type comparisons
+          if left_priority == right_priority
+            left = apply_transformations(transformation_steps, left)
+            right = apply_transformations(transformation_steps, right)
+
+            left <=> right
+          else
+            left_priority <=> right_priority
+          end
         end
 
       (@direction == :asc) ? result : result.reverse
@@ -104,8 +105,12 @@ module Sortsmith
     #
     def case_insensitive
       add_transformation do |item|
-        text = item.to_s
-        text.chars.flat_map { |c| [c.downcase, c] }
+        case item
+        when String
+          item.chars.flat_map { |c| [c.downcase, c] }
+        else
+          item
+        end
       end
     end
 
@@ -148,8 +153,26 @@ module Sortsmith
       @pipeline.select { |s| s.type == Step::TRANSFORMATION }
     end
 
-    def transform_to_string
-      Step.new(type: Step::TRANSFORMATION, block: ->(i) { i.to_s })
+    def type_priority(value)
+      case value
+      when NilClass then 0
+      when Numeric then 1
+      when String then 2
+      when Array then 3
+      when Hash then 4
+      else
+        5
+      end
+    end
+
+    def apply_transformations(steps, value)
+      result = value
+
+      steps.each do |step|
+        result = step.perform(result)
+      end
+
+      result
     end
   end
 end
