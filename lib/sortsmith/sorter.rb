@@ -98,12 +98,14 @@ module Sortsmith
 
     #
     # Instructs the sorter to sort by a case insensitive value
+    # This will prioritize capital letters first, followed by their lowercase counterparts
     #
     # @return [Self] The sorter instance
     #
     def case_insensitive
       add_transformation do |item|
-        [item&.downcase || "", item || ""]
+        text = item.to_s
+        text.chars.flat_map { |c| [c.downcase, c] }
       end
     end
 
