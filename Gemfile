@@ -12,3 +12,5 @@ gem "minitest", "~> 5.16"
 gem "standard", "~> 1.3"
 
 gem "rbs", "~> 3.8"
+
+gem "steep", "~> 1.9"
