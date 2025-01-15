@@ -1,43 +1,179 @@
 # Sortsmith
 
-TODO: Delete this and the text below, and describe your gem
+[![Gem Version](https://badge.fury.io/rb/sortsmith.svg)](https://badge.fury.io/rb/sortsmith)
+[![Tests](https://github.com/itsthedevman/sortsmith/actions/workflows/main.yml/badge.svg)](https://github.com/itsthedevman/sortsmith/actions/workflows/main.yml)
+![Ruby Version](https://img.shields.io/badge/ruby-3.3.6-ruby)
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/sortsmith`. To experiment with that code, run `bin/console` for an interactive prompt.
+Sortsmith is a flexible sorting library for Ruby that makes complex sorting operations simple and composable. It makes handling common sorting patterns like case-insensitive sorting of hashes and objects easy, while remaining extensible for custom sorting needs.
+
+## Features
+
+- Builder pattern for chainable sorting configuration
+- Built-in support for case-insensitive sorting
+- Hash key and method/attribute sorting
+- Flexible transformation pipeline
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+Add this line to your application's Gemfile:
 
-Install the gem and add to the application's Gemfile by executing:
-
-```bash
-bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+```ruby
+gem "sortsmith"
 ```
 
-If bundler is not being used to manage dependencies, install the gem by executing:
+And then execute:
 
 ```bash
-gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+$ bundle install
+```
+
+Or install it yourself as:
+
+```bash
+$ gem install sortsmith
 ```
 
 ## Usage
 
-TODO: Write usage instructions here
+### Basic Sorting
+
+```ruby
+# Sort an array of Strings
+users = ["Bob", "Alice", "Carol"]
+
+sorted_users = Sortsmith::Sorter.new(users).sort
+
+# Result: ["Alice", "Bob", "Carol"]
+```
+
+### Hash Sorting
+
+```ruby
+# Sort an array of hashes by a key
+users = [
+  { name: "Carol", age: 35 },
+  { name: "Bob", age: 25 },
+  { name: "Alice", age: 30 }
+]
+
+sorted_users = Sortsmith::Sorter.new(users)
+  .by_key(:name)
+  .sort
+
+# Result: [{ name: "Alice" }, { name: "Bob" }, { name: "Carol" }]
+```
+
+### Object Sorting
+
+```ruby
+# Sort objects by method/attribute
+class User < Data.define(:name)
+end
+
+users = [User.new(name: "Bob"), User.new(name: "Carol"), User.new(name: "Alice")]
+
+sorted_users = Sortsmith::Sorter.new(users)
+  .by_method(:name)
+  .sort
+
+# Result: [#<data User name="Alice">, #<data User name="Bob">, #<data User name="Carol">]
+```
+
+### Case Insensitive Sorting
+
+```ruby
+users = [
+  {"name" => "bob"},
+  {"name" => "Billy"},
+  {"name" => "Alice"},
+  {"name" => "carol"},
+  {"name" => "Cassidy"},
+  {"name" => "alex"}
+]
+
+# Order of methods does not matter
+# However, the hash's key type does
+sorted_users = Sortsmith::Sorter.new(users)
+    .case_insensitive
+    .by_key("name")
+    .sort
+
+# Result: [{"name"=>"Alice"}, {"name"=>"alex"}, {"name"=>"Billy"}, {"name"=>"bob"}, {"name"=>"Cassidy"}, {"name"=>"carol"}]
+```
+
+### Reverse Sorting
+
+```ruby
+# Sort in descending order
+sorted_desc = Sortsmith::Sorter.new(array)
+  .by_attribute(:name)
+  .desc
+  .sort
+```
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+### Prerequisites
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+- Ruby 3.3.6
+- Nix with Direnv (optional, but recommended)
+
+### Setting Up the Development Environment
+
+With Nix:
+```bash
+direnv allow
+```
+
+Without Nix:
+```bash
+bundle install
+```
+
+### Running Tests
+
+```bash
+bundle exec rake test
+```
+
+### Type Checking
+
+```bash
+bundle exec steep check
+```
+
+### Code Style
+
+This project uses StandardRB. To check your code:
+
+```bash
+bundle exec standardrb
+```
+
+To automatically fix issues:
+
+```bash
+bundle exec standardrb --fix
+```
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/sortsmith. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/sortsmith/blob/main/CODE_OF_CONDUCT.md).
+1. Fork it
+2. Create your feature branch (`git checkout -b feature/my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin feature/my-new-feature`)
+5. Create new Pull Request
+
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+The gem is available as open source under the terms of the [MIT License](LICENSE.md).
 
-## Code of Conduct
+## Changelog
 
-Everyone interacting in the Sortsmith project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/sortsmith/blob/main/CODE_OF_CONDUCT.md).
+See [CHANGELOG.md](CHANGELOG.md) for a list of changes.
+
+## Credits
+
+- Author: Bryan "itsthedevman"
