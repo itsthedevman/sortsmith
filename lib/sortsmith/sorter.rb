@@ -9,7 +9,7 @@ module Sortsmith
     #
     def initialize(enumerable)
       @enumerable = enumerable
-      @steps = []
+      @pipeline = []
       @direction = :asc
     end
 
@@ -22,6 +22,7 @@ module Sortsmith
       filter_steps = select_filter_steps
 
       transformation_steps = [
+        # Transforms the item to a string immediately after filtering
         transform_to_string,
         *select_transformation_steps
       ]
@@ -45,6 +46,32 @@ module Sortsmith
     end
 
     #
+    # Adds a "filter" step to the sort pipeline.
+    # Filter steps are used to get data from the current item being sorted
+    # These are performed before transformation steps
+    #
+    # @param & [Proc] The block to execute
+    #
+    # @return [Self] The sorter instance
+    #
+    def add_filter(&)
+      add_step(type: Step::FILTER, &)
+    end
+
+    #
+    # Adds a "transformation" step to the sort pipeline
+    # Transformation steps are used to transform data.
+    # These are performed after filter steps
+    #
+    # @param & [Proc] The block to execute
+    #
+    # @return [Self] The sorter instance
+    #
+    def add_transformation(&)
+      add_step(type: Step::TRANSFORMATION, &)
+    end
+
+    #
     # Instructs the sorter to perform a fetch by key on the Hash being sorted
     #
     # @param key [String, Symbol, Any] The hash key to fetch
@@ -52,7 +79,7 @@ module Sortsmith
     # @return [Self] The sorter instance
     #
     def by_key(key)
-      add_step(type: Step::FILTER) { |i| i&.fetch(key) }
+      add_filter { |i| i&.fetch(key) }
       self
     end
 
@@ -64,7 +91,7 @@ module Sortsmith
     # @return [Self] The sorter instance
     #
     def by_method(method)
-      add_step(type: Step::FILTER) { |i| i&.public_send(method) }
+      add_filter { |i| i&.public_send(method) }
     end
 
     alias_method :by_attribute, :by_method
@@ -75,7 +102,7 @@ module Sortsmith
     # @return [Self] The sorter instance
     #
     def case_insensitive
-      add_step(type: Step::TRANSFORMATION) do |item|
+      add_transformation do |item|
         [item&.downcase || "", item || ""]
       end
     end
@@ -107,16 +134,16 @@ module Sortsmith
     private
 
     def add_step(type:, &block)
-      @steps << Step.new(type: type, block: block)
+      @pipeline << Step.new(type:, block:)
       self
     end
 
     def select_filter_steps
-      @steps.select { |s| s.type == Step::FILTER }
+      @pipeline.select { |s| s.type == Step::FILTER }
     end
 
     def select_transformation_steps
-      @steps.select { |s| s.type == Step::TRANSFORMATION }
+      @pipeline.select { |s| s.type == Step::TRANSFORMATION }
     end
 
     def transform_to_string
