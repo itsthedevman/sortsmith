@@ -1,0 +1,3 @@
+module Sortsmith
+  VERSION: String
+end

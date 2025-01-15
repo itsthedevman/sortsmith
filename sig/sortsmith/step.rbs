@@ -1,0 +1,28 @@
+module Sortsmith
+  #
+  # Represents a step in the sorting process
+  #
+  class Step < ::Data
+    TYPES: ::Array[Symbol]
+
+    FILTER: Symbol
+
+    TRANSFORMATION: Symbol
+
+    attr_reader type: Symbol
+
+    attr_reader block: ^(untyped) -> untyped
+
+    def self.new: (Symbol type, untyped block) -> instance
+                | (type: Symbol, block: untyped) -> instance
+
+    def self.[]: (Symbol type, untyped block) -> instance
+              | (type: Symbol, block: untyped) -> instance
+
+    def self.members: () -> [ :type, :block ]
+
+    def members: () -> [ :type, :block ]
+
+    def perform: (untyped item) -> untyped
+  end
+end
