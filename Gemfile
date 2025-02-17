@@ -15,5 +15,7 @@ gem "rbs", "~> 3.8"
 
 gem "steep", "~> 1.9"
 
-gem "yard"
-gem "kramdown"
+group :development, :documentation do
+  gem "yard"
+  gem "kramdown"
+end
