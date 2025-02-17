@@ -13,6 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.2.0] - 12025-02-17
+
+### Added
+
+- Added Ruby version test matrix
+
+### Changed
+
+- Updated `flake.nix` to use Ruby 3.4
+
+### Removed
+
+- Removed Ruby 3.0 and 3.1 support
+
 ## [0.1.1] - 12025-01-15
 
 ### Changed
@@ -28,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Type checking with Steep/RBS
 - GitHub Actions workflow for automated testing and type checking
 
-[unreleased]: https://github.com/itsthedevman/sortsmith/compare/v0.1.1...HEAD
-[0.2.0]: https://github.com/itsthedevman/sortsmith/compare/v0.1.0...v0.1.1
+[unreleased]: https://github.com/itsthedevman/sortsmith/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/itsthedevman/sortsmith/compare/v0.1.1...v0.2.0
+[0.1.1]: https://github.com/itsthedevman/sortsmith/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/itsthedevman/sortsmith/compare/ac357965a1bc641d187333a5b032c5a423020ae9...v0.1.0
