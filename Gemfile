@@ -14,3 +14,6 @@ gem "standard", "~> 1.3"
 gem "rbs", "~> 3.8"
 
 gem "steep", "~> 1.9"
+
+gem "yard"
+gem "kramdown"
