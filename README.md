@@ -6,6 +6,23 @@
 
 Sortsmith is a flexible sorting library for Ruby that makes complex sorting operations simple and composable. It makes handling common sorting patterns like case-insensitive sorting of hashes and objects easy, while remaining extensible for custom sorting needs.
 
+## Table of Contents
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Basic Sorting](#basic-sorting)
+  - [Hash Sorting](#hash-sorting)
+  - [Object Sorting](#object-sorting)
+  - [Case Insensitive Sorting](#case-insensitive-sorting)
+  - [Reverse Sorting](#reverse-sorting)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+- [Changelog](#changelog)
+- [Credits](#credits)
+
+Also see: [API Documentation](https://itsthedevman.com/docs/sortsmith)
+
 ## Features
 
 - Builder pattern for chainable sorting configuration
