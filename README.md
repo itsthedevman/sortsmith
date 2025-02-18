@@ -1,13 +1,20 @@
 # Sortsmith
 
 [![Gem Version](https://badge.fury.io/rb/sortsmith.svg)](https://badge.fury.io/rb/sortsmith)
+![Ruby Version](https://img.shields.io/badge/ruby-3.3.7-ruby)
 [![Tests](https://github.com/itsthedevman/sortsmith/actions/workflows/main.yml/badge.svg)](https://github.com/itsthedevman/sortsmith/actions/workflows/main.yml)
-![Ruby Version](https://img.shields.io/badge/ruby-3.3.6-ruby)
 
 Sortsmith is a flexible sorting library for Ruby that makes complex sorting operations simple and composable. It makes handling common sorting patterns like case-insensitive sorting of hashes and objects easy, while remaining extensible for custom sorting needs.
 
+## Looking for a Software Engineer?
+
+I'm currently looking for opportunities where I can tackle meaningful problems and help build reliable software while mentoring the next generation of developers. If you're looking for a senior engineer with full-stack Rails expertise and a passion for clean, maintainable code, let's talk!
+
+[bryan@itsthedevman.com](mailto:bryan@itsthedevman.com)
+
 ## Table of Contents
-- [Features](#features)
+
+- [Compatibility](#compatibility)
 - [Installation](#installation)
 - [Usage](#usage)
   - [Basic Sorting](#basic-sorting)
@@ -23,12 +30,11 @@ Sortsmith is a flexible sorting library for Ruby that makes complex sorting oper
 
 Also see: [API Documentation](https://itsthedevman.com/docs/sortsmith)
 
-## Features
+## Compatibility
 
-- Builder pattern for chainable sorting configuration
-- Built-in support for case-insensitive sorting
-- Hash key and method/attribute sorting
-- Flexible transformation pipeline
+Currently tested on:
+- MRI Ruby 3.2+
+- NixOS (see `flake.nix` for details)
 
 ## Installation
 
