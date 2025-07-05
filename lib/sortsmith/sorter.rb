@@ -29,33 +29,42 @@ module Sortsmith
     end
 
     def reverse
-      @steps << {type: :ordering, method: :reverse}
+      @steps << {type: :ordering, method: :reverse!}
       self
     end
 
-    alias_method :asc, :self
-
     alias_method :desc, :reverse
+
+    def asc
+      @steps << {type: :ordering, method: :sort!}
+      self
+    end
 
     ############################################################################
     # Terminators
     def sort
+      # Extract
       ordering_steps, steps = extract_steps
 
+      # Sort
       sorted = @input.sort do |item_a, item_b|
         apply_steps(steps, item_a, item_b)
       end
 
+      # Order
       apply_ordering_steps(ordering_steps, sorted)
     end
 
     def sort!
+      # Extract
       ordering_steps, steps = extract_steps
 
+      # Sort
       @input.sort! do |item_a, item_b|
         apply_steps(steps, item_a, item_b)
       end
 
+      # Order
       apply_ordering_steps(ordering_steps, @input)
     end
 
@@ -66,10 +75,21 @@ module Sortsmith
     end
 
     def apply_steps(steps, item_a, item_b)
+      item_a ||= ""
+      item_b ||= ""
+
+      steps.each do |step|
+      end
+
+      item_a <=> item_b
     end
 
     def apply_ordering_steps(steps, sorted)
       return sorted if steps.size == 0
+
+      steps.each do |step|
+        sorted.public_send(step[:method])
+      end
 
       sorted
     end
