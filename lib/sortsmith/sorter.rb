@@ -79,9 +79,17 @@ module Sortsmith
       item_b ||= ""
 
       steps.each do |step|
+        item_a, item_b = apply_step(step, item_a, item_b)
       end
 
       item_a <=> item_b
+    end
+
+    def apply_step(step, item_a, item_b)
+      [
+        item_a.public_send(step[:method]),
+        item_b.public_send(step[:method])
+      ]
     end
 
     def apply_ordering_steps(steps, sorted)
