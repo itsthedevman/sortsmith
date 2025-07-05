@@ -40,9 +40,13 @@ module Sortsmith
     ############################################################################
     # Terminators
     def sort
+      @input.sort do |item_a, item_b|
+      end
     end
 
     def sort!
+      @input.sort! do |item_a, item_b|
+      end
     end
   end
 end
