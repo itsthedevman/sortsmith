@@ -1,4 +1,0 @@
-module Sortsmith
-  class Error < StandardError
-  end
-end
