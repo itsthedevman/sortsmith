@@ -8,25 +8,32 @@ module Sortsmith
 
     # Extractors
     def dig(*t)
+      self
     end
 
     # Modifiers
     def downcase
+      self
     end
 
     def upcase
+      self
     end
 
     def insensitive
+      self
     end
 
     def desc
+      self
     end
 
     def asc
+      self
     end
 
     def reverse
+      self
     end
 
     # Terminators
