@@ -3,7 +3,7 @@
 require "test_helper"
 
 class TestSortingArrays < Minitest::Test
-  def test_it_sorts_arrays_alphabetically
+  def test_it_sorts
     input = ["Delta", "charlie", "Bravo", "alpha"]
 
     assert_equal(
@@ -12,12 +12,28 @@ class TestSortingArrays < Minitest::Test
     )
   end
 
-  def test_it_sorts_arrays_alphabetically_case_insensitive
+  def test_it_sorts_insensitive
     input = ["Delta", "charlie", "Bravo", "alpha"]
 
     assert_equal(
       ["alpha", "Bravo", "charlie", "Delta"],
       input.sort_by.insensitive.sort
     )
+  end
+
+  def test_it_sorts_descending
+    input = ["alpha", "Delta", "Bravo", "charlie"]
+    result = ["charlie", "alpha", "Delta", "Bravo"]
+
+    assert_equal(result, input.sort_by.desc.sort)
+    assert_equal(result, input.sort_by.reverse.sort)
+  end
+
+  def test_it_sorts_descending_insensitive
+    input = ["alpha", "Delta", "Bravo", "charlie"]
+    result = ["Delta", "charlie", "Bravo", "alpha"]
+
+    assert_equal(result, input.sort_by.desc.insensitive.sort)
+    assert_equal(result, input.sort_by.insensitive.reverse.sort)
   end
 end
