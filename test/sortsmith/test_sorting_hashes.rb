@@ -17,10 +17,10 @@ class TestSortingHashes < Minitest::Test
     ]
 
     @mixed_key_chaos = [
-      {name: "Charlie", age: 25},           # symbol keys
-      {"name" => "Alice", "age" => 30},     # string keys
-      {:name => "Bob", "age" => 35},        # mixed keys (yikes!)
-      {"name" => "Diana", :age => 28}       # also mixed but different
+      {name: "Charlie", age: 25},
+      {"name" => "Alice", "age" => 30},
+      {:name => "Bob", "age" => 35},
+      {"name" => "Diana", :age => 28}
     ]
   end
 
@@ -53,7 +53,16 @@ class TestSortingHashes < Minitest::Test
   # Test indifferent_keys modifier - the lazy developer's salvation!
   def test_indifferent_keys_with_mixed_types
     input = @mixed_key_chaos.dup
-    # Should normalize to symbols and sort successfully
+
+    assert_equal(
+      [
+        {"name" => "Alice", "age" => 30},
+        {:name => "Bob", "age" => 35},
+        {name: "Charlie", age: 25},
+        {"name" => "Diana", :age => 28}
+      ],
+      input.sort_by.dig(:name, indifferent: true).sort
+    )
   end
 
   # Test indifferent_keys with purely symbol-keyed hashes
