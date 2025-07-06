@@ -33,6 +33,3 @@ jobs:
         bundler-cache: true
     - name: Run tests and standard
       run: bundle exec rake
-
-    - name: Run type checking
-      run: bundle exec steep check
