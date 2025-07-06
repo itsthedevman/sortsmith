@@ -30,8 +30,9 @@ module Sortsmith
     # @param input [Array, Enumerable] The collection to be sorted
     def initialize(input)
       @input = input
-      @steps = []           # Pipeline of extraction and transformation steps
-      @ordering_steps = []  # Pipeline of ordering operations (desc, asc)
+      @extractors = []
+      @modifiers = []
+      @ordering = []
     end
 
     ############################################################################
@@ -62,7 +63,7 @@ module Sortsmith
     #   objects.sort_by.dig(:calculate_score).sort
     #
     def dig(*identifiers, indifferent: false)
-      @steps << {method: :dig, positional: identifiers, indifferent:}
+      @extractors << {method: :dig, positional: identifiers, indifferent:}
       self
     end
 
@@ -85,7 +86,7 @@ module Sortsmith
     #   users.sort_by.dig(:name).downcase.sort
     #
     def downcase
-      @steps << {method: :downcase}
+      @modifiers << {method: :downcase}
       self
     end
 
@@ -108,7 +109,7 @@ module Sortsmith
     #   names.sort_by.upcase.sort
     #
     def upcase
-      @steps << {method: :upcase}
+      @modifiers << {method: :upcase}
       self
     end
 
@@ -125,7 +126,7 @@ module Sortsmith
     # @return [Sorter] Returns self for method chaining
     #
     def asc
-      @ordering_steps << {method: :sort!}
+      @ordering << {method: :sort!}
       self
     end
 
@@ -140,7 +141,7 @@ module Sortsmith
     #   users.sort_by.dig(:age).desc.sort
     #
     def desc
-      @ordering_steps << {method: :reverse!}
+      @ordering << {method: :reverse!}
       self
     end
 
@@ -238,7 +239,11 @@ module Sortsmith
     # @return [Integer] Comparison result (-1, 0, 1)
     #
     def apply_steps(item_a, item_b)
-      @steps.each do |step|
+      @extractors.each do |step|
+        item_a, item_b = apply_step(step, item_a, item_b)
+      end
+
+      @modifiers.each do |step|
         item_a, item_b = apply_step(step, item_a, item_b)
       end
 
@@ -256,7 +261,7 @@ module Sortsmith
     # @return [Array] The array with ordering applied
     #
     def apply_ordering_steps(sorted)
-      @ordering_steps.each do |step|
+      @ordering.each do |step|
         sorted.public_send(step[:method])
       end
 
