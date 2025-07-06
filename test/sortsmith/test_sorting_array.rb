@@ -58,4 +58,16 @@ class TestSortingArray < Minitest::Test
 
     assert_equal(result, input.sort_by.dig(:name).sort)
   end
+
+  def test_it_sorts_by_key_insensitively
+    input = @input_hashes.shuffle
+    result = [
+      {name: "alpha", age: 30, city: "LA"},
+      {name: "Bravo", age: 20, city: "Chicago"},
+      {name: "charlie", age: 25, city: "NYC"},
+      {name: "Delta", age: 35, city: "NYC"}
+    ]
+
+    assert_equal(result, input.sort_by.dig(:name).upcase.sort)
+  end
 end
