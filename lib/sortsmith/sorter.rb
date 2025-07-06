@@ -5,6 +5,7 @@ module Sortsmith
     def initialize(input)
       @input = input
       @steps = []
+      @ordering_steps = []
     end
 
     ############################################################################
@@ -28,42 +29,38 @@ module Sortsmith
       self
     end
 
+    ############################################################################
+    # Ordering
     def asc
-      @steps << {type: :ordering, method: :sort!}
+      @ordering_steps << {method: :sort!}
       self
     end
 
     def desc
-      @steps << {type: :ordering, method: :reverse!}
+      @ordering_steps << {method: :reverse!}
       self
     end
 
     ############################################################################
     # Terminators
     def sort
-      # Extract
-      ordering_steps, steps = extract_steps
-
       # Sort
       sorted = @input.sort do |item_a, item_b|
-        apply_steps(steps, item_a, item_b)
+        apply_steps(item_a, item_b)
       end
 
       # Order
-      apply_ordering_steps(ordering_steps, sorted)
+      apply_ordering_steps(sorted)
     end
 
     def sort!
-      # Extract
-      ordering_steps, steps = extract_steps
-
       # Sort
       @input.sort! do |item_a, item_b|
-        apply_steps(steps, item_a, item_b)
+        apply_steps(item_a, item_b)
       end
 
       # Order
-      apply_ordering_steps(ordering_steps, @input)
+      apply_ordering_steps(@input)
     end
 
     def reverse
@@ -76,12 +73,8 @@ module Sortsmith
 
     private
 
-    def extract_steps
-      @steps.partition { |s| s[:type] == :ordering }
-    end
-
-    def apply_steps(steps, item_a, item_b)
-      steps.each do |step|
+    def apply_steps(item_a, item_b)
+      @steps.each do |step|
         item_a, item_b = apply_step(step, item_a, item_b)
       end
 
@@ -116,10 +109,8 @@ module Sortsmith
       [item_a, item_b]
     end
 
-    def apply_ordering_steps(steps, sorted)
-      return sorted if steps.size == 0
-
-      steps.each do |step|
+    def apply_ordering_steps(sorted)
+      @ordering_steps.each do |step|
         sorted.public_send(step[:method])
       end
 
