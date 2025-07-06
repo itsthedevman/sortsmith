@@ -17,10 +17,21 @@ class TestSortingObjects < Minitest::Test
   # Test sorting objects by method
   def test_sorting_by_method
     input = @users.dup
+
+    result = input.sort_by.dig(:name).insensitive.sort
+    names = result.map(&:name)
+
+    assert_equal(["alpha", "Bravo", "charlie", "Delta"], names)
   end
 
   # Test sorting by method that doesn't exist
   def test_sorting_by_missing_method
     input = @users.dup
+
+    result = input.sort_by.dig(:email).insensitive.sort
+    names = result.map(&:name)
+
+    # No sort
+    assert_equal(["charlie", "alpha", "Bravo", "Delta"], names)
   end
 end
