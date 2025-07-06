@@ -31,5 +31,18 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
-    - name: Run tests and standard
+    - name: Install dependencies (older Ruby)
+      if: matrix.ruby < 3.0
+      run: bundle install --without development
+
+    - name: Install dependencies (modern Ruby)
+      if: matrix.ruby >= 3.0
+      run: bundle install
+
+    - name: Run tests only (older Ruby)
+      if: matrix.ruby < 3.0
+      run: bundle exec rake test
+
+    - name: Run tests and linting (modern Ruby)
+      if: matrix.ruby >= 3.0
       run: bundle exec rake
