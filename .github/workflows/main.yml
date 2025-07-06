@@ -8,22 +8,12 @@ on:
 
 
 jobs:
-  build:
+  test-modern:
     runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }}
+    name: Ruby ${{ matrix.ruby }} (with linting)
     strategy:
       matrix:
-        ruby:
-        - "2.5.9"
-        - "2.6.10"
-        - "2.7.8"
-        - "3.0.7"
-        - "3.1.7"
-        - "3.2.8"
-        - "3.3.8"
-        - "3.4.4"
-      fail-fast: false
-
+        ruby: [ "3.0.7", "3.1.7", "3.2.8", "3.3.8", "3.4.4" ]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Ruby
@@ -31,7 +21,23 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
-        env:
-          BUNDLE_WITHOUT: ${{ matrix.ruby < "3.0" && "development:lint" || "" }}
     - name: Run tests and standard
       run: bundle exec rake
+
+  test-legacy:
+    runs-on: ubuntu-latest
+    name: Ruby ${{ matrix.ruby }} (tests only)
+    strategy:
+      matrix:
+        ruby: [ "2.5.9", "2.6.10", "2.7.8" ]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
+      env:
+        BUNDLE_WITHOUT: "development"
+    - name: Run tests only
+      run: bundle exec rake test
