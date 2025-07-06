@@ -237,6 +237,23 @@ module Sortsmith
     end
 
     ##
+    # Apply ordering transformations to the sorted array
+    #
+    # Executes any ordering steps (like desc) that affect the final
+    # arrangement of the sorted results.
+    #
+    # @param sorted [Array] The array to apply ordering to
+    # @return [Array] The array with ordering applied
+    #
+    def apply_ordering_steps(sorted)
+      @ordering_steps.each do |step|
+        sorted.public_send(step[:method])
+      end
+
+      sorted
+    end
+
+    ##
     # Apply a single step to both items in the comparison
     #
     # Handles different step types and safely manages method calls,
@@ -257,44 +274,29 @@ module Sortsmith
         positional = positional.map { |i| i.respond_to?(:to_sym) ? i.to_sym : i }
       end
 
-      # Transform item_a
-      item_a =
-        if item_a.respond_to?(method)
-          # For hash objects with indifferent access, normalize keys to symbols
-          item_a = item_a.transform_keys(&:to_sym) if indifferent
-          item_a.public_send(method, *positional)
-        else
-          # Fallback for objects that don't respond to the method
-          item_a.to_s
-        end
-
-      # Transform item_b (same logic)
-      item_b =
-        if item_b.respond_to?(method)
-          item_b = item_b.transform_keys(&:to_sym) if indifferent
-          item_b.public_send(method, *positional)
-        else
-          item_b.to_s
-        end
+      item_a = extract_value_from(item_a, method, positional, indifferent)
+      item_b = extract_value_from(item_b, method, positional, indifferent)
 
       [item_a, item_b]
     end
 
     ##
-    # Apply ordering transformations to the sorted array
+    # Extracts a value from an object using the specified method and parameters.
     #
-    # Executes any ordering steps (like desc) that affect the final
-    # arrangement of the sorted results.
+    # @param item [Object] the object to extract a value from
+    # @param method [Symbol, String] the method name to call on the object
+    # @param positional [Array] positional arguments to pass to the method
+    # @param indifferent [Boolean] whether to normalize hash keys to symbols for indifferent access
     #
-    # @param sorted [Array] The array to apply ordering to
-    # @return [Array] The array with ordering applied
+    # @return [Object] the extracted value, or the string representation of the item
     #
-    def apply_ordering_steps(sorted)
-      @ordering_steps.each do |step|
-        sorted.public_send(step[:method])
-      end
+    def extract_value_from(item, method, positional, indifferent)
+      return item.to_s unless item.respond_to?(method)
 
-      sorted
+      # For hash objects with indifferent access, normalize keys to symbols
+      item = item.transform_keys(&:to_sym) if indifferent
+
+      item.public_send(method, *positional)
     end
   end
 end
