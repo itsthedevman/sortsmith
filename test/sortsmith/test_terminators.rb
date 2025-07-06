@@ -48,4 +48,14 @@ class TestTerminators < Minitest::Test
     assert_equal(["charlie", "bravo", "alpha"], input)
     assert_same(input, result)
   end
+
+  # Test to_a terminator
+  def test_to_a_terminator
+    input = @strings.dup
+
+    result = input.sort_by.to_a
+
+    assert_equal(["alpha", "bravo", "charlie"], result)
+    refute_same(input, result)
+  end
 end

@@ -93,6 +93,7 @@ module Sortsmith
     # Alias for #downcase - provides case-insensitive sorting
     #
     # @return [Sorter] Returns self for method chaining
+    #
     alias_method :insensitive, :downcase
 
     ##
@@ -167,6 +168,15 @@ module Sortsmith
       # Apply any ordering transformations (like desc)
       apply_ordering_steps(sorted)
     end
+
+    ##
+    # Alias for #sort - returns a new sorted array
+    #
+    # @return [Array] A new array containing the sorted elements
+    #
+    # @see #sort
+    #
+    alias_method :to_a, :sort
 
     ##
     # Execute the sort pipeline and mutate the original array in place
