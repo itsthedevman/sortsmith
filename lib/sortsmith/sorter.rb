@@ -63,7 +63,7 @@ module Sortsmith
     #   objects.sort_by.dig(:calculate_score).sort
     #
     def dig(*identifiers, indifferent: false)
-      @extractors << {method: :dig, positional: identifiers, indifferent:}
+      @extractors << {method: :dig, positional: identifiers, indifferent: indifferent}
       self
     end
 
