@@ -10,8 +10,8 @@ module Sortsmith
 
     ############################################################################
     # Extractors
-    def dig(*identifiers)
-      @steps << {method: :dig, positional: identifiers}
+    def dig(*identifiers, indifferent: false)
+      @steps << {method: :dig, positional: identifiers, indifferent:}
       self
     end
 
@@ -84,9 +84,15 @@ module Sortsmith
     def apply_step(step, item_a, item_b)
       method = step[:method]
       positional = step[:positional] || []
+      indifferent = step[:indifferent] || false
+
+      if indifferent
+        positional = positional.map { |i| i.respond_to?(:to_sym) ? i.to_sym : i }
+      end
 
       item_a =
         if item_a.respond_to?(method)
+          item_a = item_a.transform_keys(&:to_sym) if indifferent
           item_a.public_send(method, *positional)
         else
           item_a.to_s
@@ -94,6 +100,7 @@ module Sortsmith
 
       item_b =
         if item_b.respond_to?(method)
+          item_b = item_b.transform_keys(&:to_sym) if indifferent
           item_b.public_send(method, *positional)
         else
           item_b.to_s
