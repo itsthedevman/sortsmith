@@ -28,15 +28,13 @@ module Sortsmith
       self
     end
 
-    def reverse
-      @steps << {type: :ordering, method: :reverse!}
+    def asc
+      @steps << {type: :ordering, method: :sort!}
       self
     end
 
-    alias_method :desc, :reverse
-
-    def asc
-      @steps << {type: :ordering, method: :sort!}
+    def desc
+      @steps << {type: :ordering, method: :reverse!}
       self
     end
 
@@ -66,6 +64,14 @@ module Sortsmith
 
       # Order
       apply_ordering_steps(ordering_steps, @input)
+    end
+
+    def reverse
+      desc.sort
+    end
+
+    def reverse!
+      desc.sort!
     end
 
     private

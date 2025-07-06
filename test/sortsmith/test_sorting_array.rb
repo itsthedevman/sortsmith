@@ -35,16 +35,16 @@ class TestSortingArray < Minitest::Test
     input = @input_strings.shuffle
     result = ["charlie", "alpha", "Delta", "Bravo"]
 
+    assert_equal(result, input.sort_by.reverse)
     assert_equal(result, input.sort_by.desc.sort)
-    assert_equal(result, input.sort_by.reverse.sort)
   end
 
   def test_it_sorts_descending_insensitive
     input = @input_strings.shuffle
     result = ["Delta", "charlie", "Bravo", "alpha"]
 
+    assert_equal(result, input.sort_by.insensitive.reverse)
     assert_equal(result, input.sort_by.desc.insensitive.sort)
-    assert_equal(result, input.sort_by.insensitive.reverse.sort)
   end
 
   def test_it_sorts_by_key
