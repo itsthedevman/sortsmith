@@ -99,8 +99,19 @@ module Sortsmith
           [method]
         end
 
-      item_a = item_a.respond_to?(method) ? item_a.public_send(*signature) : ""
-      item_b = item_b.respond_to?(method) ? item_b.public_send(*signature) : ""
+      item_a =
+        if item_a.respond_to?(method)
+          item_a.public_send(*signature)
+        else
+          item_a.to_s
+        end
+
+      item_b =
+        if item_b.respond_to?(method)
+          item_b.public_send(*signature)
+        else
+          item_b.to_s
+        end
 
       [item_a, item_b]
     end
