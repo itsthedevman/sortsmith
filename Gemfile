@@ -17,3 +17,5 @@ gem "minitest", "~> 5.16"
 gem "standard", "~> 1.3"
 
 gem "pry", "~> 0.15.2"
+
+gem "benchmark-ips"

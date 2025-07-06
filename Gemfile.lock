@@ -7,6 +7,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     ast (2.4.2)
+    benchmark-ips (2.14.0)
     coderay (1.1.3)
     json (2.9.1)
     kramdown (2.5.1)
@@ -63,6 +64,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  benchmark-ips
   kramdown
   minitest (~> 5.16)
   pry (~> 0.15.2)
