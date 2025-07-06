@@ -81,9 +81,6 @@ module Sortsmith
     end
 
     def apply_steps(steps, item_a, item_b)
-      item_a ||= ""
-      item_b ||= ""
-
       steps.each do |step|
         item_a, item_b = apply_step(step, item_a, item_b)
       end
