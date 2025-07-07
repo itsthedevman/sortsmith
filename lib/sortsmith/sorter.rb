@@ -1,293 +1,317 @@
 # frozen_string_literal: true
 
 module Sortsmith
+  ##
+  # A chainable sorting interface that provides a fluent API for complex sorting operations.
   #
-  # The Sorter class provides a flexible, chainable API for sorting Ruby collections.
-  # It supports sorting by keys, methods, case sensitivity, and custom transformations.
+  # The Sorter class allows you to build sorting pipelines by chaining extractors,
+  # modifiers, and ordering methods before executing the sort with a terminator method.
   #
-  # The sorting process works by building a pipeline of steps that are applied
-  # when comparing elements. These steps can be either filters (extracting data)
-  # or transformations (modifying data for comparison).
+  # @example Basic usage
+  #   users.sort_by.dig(:name).sort
+  #   # => sorted array by name
   #
-  # @example Sort an array of strings
-  #   Sortsmith::Sorter.new(["Bob", "Alice", "Carol"]).sort
-  #   # => ["Alice", "Bob", "Carol"]
+  # @example Complex chaining
+  #   users.sort_by.dig(:name, indifferent: true).downcase.desc.sort
+  #   # => sorted by name (case-insensitive, descending, with indifferent key access)
   #
-  # @example Sort hashes by key
-  #   users = [{ name: "Bob", age: 30 }, { name: "Alice", age: 25 }]
-  #   Sortsmith::Sorter.new(users).by_key(:name).sort
-  #   # => [{ name: "Alice", age: 25 }, { name: "Bob", age: 30 }]
-  #
-  # @example Sort objects by method with case insensitivity
-  #   User = Struct.new(:name)
-  #   users = [User.new("bob"), User.new("Alice")]
-  #   Sortsmith::Sorter.new(users).by_method(:name).case_insensitive.sort
-  #   # => [User.new("Alice"), User.new("bob")]
+  # @example Mixed key types
+  #   mixed_data = [
+  #     {name: "Bob"},      # symbol key
+  #     {"name" => "Alice"} # string key
+  #   ]
+  #   mixed_data.sort_by.dig(:name, indifferent: true).sort
+  #   # => handles both key types gracefully
   #
   class Sorter
+    ##
+    # Initialize a new Sorter instance
     #
-    # Creates a new Sorter builder instance
-    #
-    # @param enumerable [Enumerable] The enumerable (Array, Hash) to sort
-    #
-    # @return [Sorter] A new Sorter instance
-    #
-    # @example
-    #   Sortsmith::Sorter.new(["c", "a", "b"])
-    #
-    def initialize(enumerable)
-      @enumerable = enumerable
-      @pipeline = []
-      @direction = :asc
+    # @param input [Array, Enumerable] The collection to be sorted
+    def initialize(input)
+      @input = input
+      @extractors = []
+      @modifiers = []
+      @ordering = []
     end
 
-    #
-    # Finalizes the Sorter instance and sorts the enumerable
-    #
-    # @return [Enumerable] The sorted enumerable
-    #
-    # @example Simple sort
-    #   Sortsmith::Sorter.new(["c", "b", "a"]).sort
-    #   # => ["a", "b", "c"]
-    #
-    # @example Complex sort
-    #   Sortsmith::Sorter.new([{name: "Bob"}, {name: "Alice"}])
-    #     .by_key(:name)
-    #     .sort
-    #   # => [{name: "Alice"}, {name: "Bob"}]
-    #
-    def sort
-      filter_steps = select_filter_steps
-      transformation_steps = select_transformation_steps
+    ############################################################################
+    # Extractors
+    ############################################################################
 
-      result =
-        @enumerable.sort do |left, right|
-          filter_steps.each do |step|
-            left = step.perform(left)
-            right = step.perform(right)
-          end
-
-          left_priority = type_priority(left)
-          right_priority = type_priority(right)
-
-          # Apply the transformation pipeline only for same-type comparisons
-          if left_priority == right_priority
-            left = apply_transformations(transformation_steps, left)
-            right = apply_transformations(transformation_steps, right)
-
-            left <=> right
-          else
-            left_priority <=> right_priority
-          end
-        end
-
-      (@direction == :asc) ? result : result.reverse
-    end
-
+    ##
+    # Extract values from objects using hash keys or object methods
     #
-    # Adds a "filter" step to the sort pipeline.
-    # Filter steps are used to get data from the current item being sorted
-    # These are performed before transformation steps
+    # Works with hashes, structs, and any object that responds to the given identifiers.
+    # Supports nested digging with multiple arguments.
     #
-    # @yield [item] Block that extracts data from the item being sorted
-    # @yieldparam item [Object] The item being processed
-    # @yieldreturn [Object] The extracted data to be used for comparison
+    # @param identifiers [Array<Symbol, String, Integer>] Keys, method names, or indices to extract
+    # @param indifferent [Boolean] When true, normalizes hash keys to symbols for consistent lookup
     #
-    # @return [Sorter] The sorter instance for method chaining
+    # @return [Sorter] Returns self for method chaining
     #
-    # @example
-    #   Sortsmith::Sorter.new(users).add_filter { |user| user.name.downcase }
+    # @example Hash extraction
+    #   users.sort_by.dig(:name).sort
     #
-    def add_filter(&)
-      add_step(type: Step::FILTER, &)
-    end
-
+    # @example Nested extraction
+    #   users.sort_by.dig(:profile, :email).sort
     #
-    # Adds a "transformation" step to the sort pipeline
-    # Transformation steps are used to transform data.
-    # These are performed after filter steps
+    # @example Mixed key types
+    #   users.sort_by.dig(:name, indifferent: true).sort
     #
-    # @yield [item] Block that transforms the data for comparison
-    # @yieldparam item [Object] The data to transform
-    # @yieldreturn [Object] The transformed data to be used for comparison
+    # @example Object method calls
+    #   objects.sort_by.dig(:calculate_score).sort
     #
-    # @return [Sorter] The sorter instance for method chaining
-    #
-    # @example
-    #   Sortsmith::Sorter.new(users).add_transformation { |str| str.downcase }
-    #
-    def add_transformation(&)
-      add_step(type: Step::TRANSFORMATION, &)
-    end
-
-    #
-    # Instructs the sorter to perform a fetch by key on the Hash being sorted
-    #
-    # @param key [String, Symbol, Any] The hash key to fetch
-    #
-    # @return [Sorter] The sorter instance for method chaining
-    #
-    # @example
-    #   users = [{ name: "Bob" }, { name: "Alice" }]
-    #   Sortsmith::Sorter.new(users).by_key(:name).sort
-    #   # => [{ name: "Alice" }, { name: "Bob" }]
-    #
-    def by_key(key)
-      add_filter { |i| i&.fetch(key) }
+    def dig(*identifiers, indifferent: false)
+      @extractors << {method: :dig, positional: identifiers, indifferent: indifferent}
       self
     end
 
+    ############################################################################
+    # Modifiers
+    ############################################################################
+
+    ##
+    # Transform extracted values to lowercase for comparison
     #
-    # Instructs the sorter to perform a method call on the object being sorted
+    # Only affects values that respond to #downcase (typically strings).
+    # Non-string values pass through unchanged.
     #
-    # @param method [String, Symbol] The method name to call
+    # @return [Sorter] Returns self for method chaining
     #
-    # @return [Sorter] The sorter instance for method chaining
+    # @example Case-insensitive string sorting
+    #   names.sort_by.downcase.sort
     #
-    # @example
-    #   User = Struct.new(:name)
-    #   users = [User.new("Bob"), User.new("Alice")]
-    #   Sortsmith::Sorter.new(users).by_method(:name).sort
-    #   # => [User.new("Alice"), User.new("Bob")]
+    # @example With hash extraction
+    #   users.sort_by.dig(:name).downcase.sort
     #
-    def by_method(method)
-      add_filter { |i| i&.public_send(method) }
+    def downcase
+      @modifiers << {method: :downcase}
+      self
     end
 
-    alias_method :by_attribute, :by_method
+    ##
+    # Alias for #downcase - provides case-insensitive sorting
+    #
+    # @return [Sorter] Returns self for method chaining
+    #
+    alias_method :insensitive, :downcase
 
+    ##
+    # Transform extracted values to uppercase for comparison
     #
-    # Instructs the sorter to sort by a case insensitive value
-    # This will prioritize capital letters first, followed by their lowercase counterparts
+    # Only affects values that respond to #upcase (typically strings).
+    # Non-string values pass through unchanged.
     #
-    # @return [Sorter] The sorter instance for method chaining
+    # @return [Sorter] Returns self for method chaining
     #
-    # @example
-    #   Sortsmith::Sorter.new(["ab", "Ab", "BA", "ba"]).case_insensitive.sort
-    #   # => ["Ab", "ab", "BA", "ba"]
+    # @example Uppercase sorting
+    #   names.sort_by.upcase.sort
     #
-    def case_insensitive
-      add_transformation do |item|
-        case item
-        when String
-          item.chars.flat_map { |c| [c.downcase, c] }
-        else
-          item
-        end
-      end
+    def upcase
+      @modifiers << {method: :upcase}
+      self
     end
 
+    ############################################################################
+    # Ordering
+    ############################################################################
+
+    ##
+    # Sort in ascending order (default behavior)
     #
-    # Controls which direction the array will be sorted (ascending)
+    # This is typically unnecessary as ascending is the default,
+    # but can be useful for explicit clarity or resetting after desc.
     #
-    # @return [Sorter] The sorter instance for method chaining
-    #
-    # @example
-    #   Sortsmith::Sorter.new([3, 1, 2]).asc.sort
-    #   # => [1, 2, 3]
+    # @return [Sorter] Returns self for method chaining
     #
     def asc
-      @direction = :asc
+      @ordering << {method: :sort!}
       self
     end
 
-    alias_method :forward, :asc
-
+    ##
+    # Sort in descending order
     #
-    # Controls which direction the array will be sorted (descending)
+    # Reverses the final sort order after all comparisons are complete.
     #
-    # @return [Sorter] The sorter instance for method chaining
+    # @return [Sorter] Returns self for method chaining
     #
-    # @example
-    #   Sortsmith::Sorter.new([3, 1, 2]).desc.sort
-    #   # => [3, 2, 1]
+    # @example Descending sort
+    #   users.sort_by.dig(:age).desc.sort
     #
     def desc
-      @direction = :desc
+      @ordering << {method: :reverse!}
       self
     end
 
-    alias_method :reverse, :desc
+    ############################################################################
+    # Terminators
+    ############################################################################
+
+    ##
+    # Execute the sort pipeline and return a new sorted array
+    #
+    # Applies all chained extraction, transformation, and ordering steps
+    # to produce the final sorted result. The original collection is unchanged.
+    #
+    # @return [Array] A new array containing the sorted elements
+    #
+    # @example Basic termination
+    #   sorted_users = users.sort_by.dig(:name).sort
+    #
+    def sort
+      # Apply all extraction and transformation steps during comparison
+      sorted = @input.sort do |item_a, item_b|
+        apply_steps(item_a, item_b)
+      end
+
+      # Apply any ordering transformations (like desc)
+      apply_ordering_steps(sorted)
+    end
+
+    ##
+    # Alias for #sort - returns a new sorted array
+    #
+    # @return [Array] A new array containing the sorted elements
+    #
+    # @see #sort
+    #
+    alias_method :to_a, :sort
+
+    ##
+    # Execute the sort pipeline and mutate the original array in place
+    #
+    # Same as #sort but modifies the original array instead of creating a new one.
+    # Returns the mutated array for chaining.
+    #
+    # @return [Array] The original array, now sorted
+    #
+    # @example In-place sorting
+    #   users.sort_by.dig(:name).sort!
+    #   # users array is now modified
+    #
+    def sort!
+      # Sort the original array in place
+      @input.sort! do |item_a, item_b|
+        apply_steps(item_a, item_b)
+      end
+
+      # Apply any ordering transformations
+      apply_ordering_steps(@input)
+    end
+
+    ##
+    # Shorthand for adding desc and executing sort
+    #
+    # Equivalent to calling .desc.sort but more concise.
+    #
+    # @return [Array] A new array sorted in descending order
+    #
+    # @example Reverse sorting
+    #   users.sort_by.dig(:name).reverse
+    #
+    def reverse
+      desc.sort
+    end
+
+    ##
+    # Shorthand for adding desc and executing sort!
+    #
+    # Equivalent to calling .desc.sort! but more concise.
+    #
+    # @return [Array] The original array, sorted in descending order
+    #
+    def reverse!
+      desc.sort!
+    end
 
     private
 
+    ##
+    # Apply the complete pipeline of steps to two items for comparison
     #
-    # Adds a step to the pipeline
+    # Iterates through all extraction and transformation steps,
+    # applying each one to both items in sequence.
     #
-    # @param type [Symbol] The type of step (filter or transformation)
-    # @yield [item] The block to execute for this step
+    # @param item_a [Object] First item to compare
+    # @param item_b [Object] Second item to compare
+    # @return [Integer] Comparison result (-1, 0, 1)
     #
-    # @return [Sorter] The sorter instance
-    #
-    # @api private
-    #
-    def add_step(type:, &block)
-      @pipeline << Step.new(type:, block:)
-      self
-    end
-
-    #
-    # Returns all filter steps from the pipeline
-    #
-    # @return [Array<Step>] Array of filter steps
-    #
-    # @api private
-    #
-    def select_filter_steps
-      @pipeline.select { |s| s.type == Step::FILTER }
-    end
-
-    #
-    # Returns all transformation steps from the pipeline
-    #
-    # @return [Array<Step>] Array of transformation steps
-    #
-    # @api private
-    #
-    def select_transformation_steps
-      @pipeline.select { |s| s.type == Step::TRANSFORMATION }
-    end
-
-    #
-    # Determines the priority of a value based on its type
-    # Used for sorting different types of objects
-    #
-    # @param value [Object] The value to check
-    #
-    # @return [Integer] The priority value (lower = higher priority)
-    #
-    # @api private
-    #
-    def type_priority(value)
-      case value
-      when NilClass then 0
-      when Numeric then 1
-      when String then 2
-      when Array then 3
-      when Hash then 4
-      else
-        5
-      end
-    end
-
-    #
-    # Applies all transformation steps to a value
-    #
-    # @param steps [Array<Step>] The transformation steps to apply
-    # @param value [Object] The value to transform
-    #
-    # @return [Object] The transformed value
-    #
-    # @api private
-    #
-    def apply_transformations(steps, value)
-      result = value
-
-      steps.each do |step|
-        result = step.perform(result)
+    def apply_steps(item_a, item_b)
+      @extractors.each do |step|
+        item_a, item_b = apply_step(step, item_a, item_b)
       end
 
-      result
+      @modifiers.each do |step|
+        item_a, item_b = apply_step(step, item_a, item_b)
+      end
+
+      # Final comparison using Ruby's spaceship operator
+      item_a <=> item_b
+    end
+
+    ##
+    # Apply ordering transformations to the sorted array
+    #
+    # Executes any ordering steps (like desc) that affect the final
+    # arrangement of the sorted results.
+    #
+    # @param sorted [Array] The array to apply ordering to
+    # @return [Array] The array with ordering applied
+    #
+    def apply_ordering_steps(sorted)
+      @ordering.each do |step|
+        sorted.public_send(step[:method])
+      end
+
+      sorted
+    end
+
+    ##
+    # Apply a single step to both items in the comparison
+    #
+    # Handles different step types and safely manages method calls,
+    # falling back to string conversion for non-responsive objects.
+    #
+    # @param step [Hash] Step configuration containing method and arguments
+    # @param item_a [Object] First item to transform
+    # @param item_b [Object] Second item to transform
+    # @return [Array<Object, Object>] Transformed items
+    #
+    def apply_step(step, item_a, item_b)
+      method = step[:method]
+      positional = step[:positional] || []
+      indifferent = step[:indifferent] || false
+
+      # For indifferent key access, normalize all positional args to symbols
+      if indifferent
+        positional = positional.map { |i| i.respond_to?(:to_sym) ? i.to_sym : i }
+      end
+
+      item_a = extract_value_from(item_a, method, positional, indifferent)
+      item_b = extract_value_from(item_b, method, positional, indifferent)
+
+      [item_a, item_b]
+    end
+
+    ##
+    # Extracts a value from an object using the specified method and parameters.
+    #
+    # @param item [Object] the object to extract a value from
+    # @param method [Symbol, String] the method name to call on the object
+    # @param positional [Array] positional arguments to pass to the method
+    # @param indifferent [Boolean] whether to normalize hash keys to symbols for indifferent access
+    #
+    # @return [Object] the extracted value, or the string representation of the item
+    #
+    def extract_value_from(item, method, positional, indifferent)
+      return item.to_s unless item.respond_to?(method)
+
+      # For hash objects with indifferent access, normalize keys to symbols
+      item = item.transform_keys(&:to_sym) if indifferent
+
+      item.public_send(method, *positional)
     end
   end
 end

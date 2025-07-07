@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Sortsmith provides a flexible, chainable API for sorting Ruby collections. It supports sorting by object keys, methods, case sensitivity, and custom transformations."
   spec.homepage = "https://github.com/itsthedevman/sortsmith"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.2"
+  spec.required_ruby_version = ">= 3.0"
 
   spec.metadata = {
     "source_code_uri" => "https://github.com/itsthedevman/sortsmith",

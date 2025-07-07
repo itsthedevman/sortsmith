@@ -7,15 +7,20 @@ gemspec
 
 gem "rake", "~> 13.0"
 
-gem "minitest", "~> 5.16"
+group :development do
+  gem "benchmark-ips"
+end
 
-gem "standard", "~> 1.3"
-
-gem "rbs", "~> 3.8"
-
-gem "steep", "~> 1.9"
+group :development, :lint do
+  gem "standard", "~> 1.3"
+  gem "pry", "~> 0.15.2"
+end
 
 group :development, :documentation do
   gem "yard"
   gem "kramdown"
+end
+
+group :test do
+  gem "minitest", "~> 5.16"
 end

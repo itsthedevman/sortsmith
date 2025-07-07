@@ -4,5 +4,5 @@ module Sortsmith
   #
   # The current version of the Sortsmith gem
   #
-  VERSION = "0.2.0"
+  VERSION = "0.3.0"
 end

@@ -1,36 +1,56 @@
 # frozen_string_literal: true
 
-require_relative "sortsmith/sorter"
-require_relative "sortsmith/step"
 require_relative "sortsmith/version"
+require_relative "sortsmith/core_ext/enumerable"
+require_relative "sortsmith/sorter"
 
+##
+# Sortsmith provides a flexible, chainable API for sorting Ruby collections.
 #
-# Sortsmith provides a flexible, chainable API for sorting Ruby collections
-# with support for custom transformations, filtering by keys or methods,
-# and case-insensitive comparisons.
+# The gem extends Ruby's built-in {Enumerable} module to provide an intuitive
+# sorting interface that reads like natural language and supports complex
+# sorting operations through method chaining.
 #
-# @example Basic array sorting
-#   users = ["Bob", "Alice", "Carol"]
-#   sorted_users = Sortsmith::Sorter.new(users).sort
-#   # => ["Alice", "Bob", "Carol"]
+# @example Basic usage
+#   users = ["Charlie", "alice", "Bob"]
+#   users.sort_by.downcase.sort
+#   # => ["alice", "Bob", "Charlie"]
 #
-# @example Sorting objects by method
-#   users = [User.new(name: "Bob"), User.new(name: "Alice")]
-#   sorted_users = Sortsmith::Sorter.new(users).by_method(:name).sort
+# @example Hash sorting
+#   users = [
+#     { name: "Charlie", age: 25 },
+#     { name: "alice", age: 30 },
+#     { name: "Bob", age: 20 }
+#   ]
+#   users.sort_by.dig(:name).insensitive.sort
+#   # => sorted by name, case-insensitive
 #
-# @example Case-insensitive hash sorting
-#   users = [{ name: "bob" }, { name: "Alice" }]
-#   sorted_users = Sortsmith::Sorter.new(users)
-#     .by_key(:name)
-#     .case_insensitive
-#     .sort
+# @example Complex chaining
+#   users.sort_by.dig(:name, indifferent: true).downcase.desc.sort
+#   # => Extract name (works with both string/symbol keys), downcase, descending
+#
+# @see Sortsmith::Sorter The main sorting interface
+# @see Enumerable#sort_by The extended sort_by method
+#
+# @author Bryan "itsthedevman"
+# @since 0.1.0
 #
 module Sortsmith
+  ##
+  # Base error class for all Sortsmith-related exceptions.
   #
-  # Custom error class for Sortsmith-specific exceptions
+  # This provides a namespace for any custom errors that may be raised
+  # during sorting operations, making it easier to rescue Sortsmith-specific
+  # issues without catching unrelated StandardError instances.
   #
-  # @example Raising a Sortsmith error
-  #   raise Sortsmith::Error, "Something went wrong with the sorting operation"
+  # @example Rescuing Sortsmith errors
+  #   begin
+  #     complex_sort_operation
+  #   rescue Sortsmith::Error => e
+  #     handle_sorting_error(e)
+  #   end
+  #
+  # @since 0.1.0
   #
   class Error < StandardError; end
 end
