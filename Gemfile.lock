@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sortsmith (0.3.0)
+    sortsmith (0.9.0)
 
 GEM
   remote: https://rubygems.org/
@@ -78,3 +78,6 @@ DEPENDENCIES
   sortsmith!
   standard (~> 1.3)
   yard
+
+BUNDLED WITH
+   2.5.22
