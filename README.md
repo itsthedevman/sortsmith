@@ -60,7 +60,6 @@ users.sort_by.dig(:name, indifferent: true).insensitive.desc.sort
 - **Indifferent key access** - Handles mixed symbol/string keys automatically
 - **Nil-safe** - Graceful handling of missing data
 - **Minimal overhead** - Extends existing Ruby methods without breaking compatibility
-- **Tab-completable** - Discoverable API through your editor
 
 ## Installation
 
