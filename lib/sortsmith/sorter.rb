@@ -170,9 +170,7 @@ module Sortsmith
     #
     def sort
       # Apply all extraction and transformation steps during comparison
-      sorted = @input.sort do |item_a, item_b|
-        apply_steps(item_a, item_b)
-      end
+      sorted = @input.sort { |a, b| apply_steps(a, b) }
 
       # Apply any ordering transformations (like desc)
       apply_ordering_steps(sorted)
@@ -201,9 +199,7 @@ module Sortsmith
     #
     def sort!
       # Sort the original array in place
-      @input.sort! do |item_a, item_b|
-        apply_steps(item_a, item_b)
-      end
+      @input.sort! { |a, b| apply_steps(a, b) }
 
       # Apply any ordering transformations
       apply_ordering_steps(@input)
