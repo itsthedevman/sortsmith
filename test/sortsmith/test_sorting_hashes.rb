@@ -28,7 +28,7 @@ class TestSortingHashes < Minitest::Test
   def test_sorting_by_symbol_key
     input = @symbol_key_users.dup
 
-    result = input.sort_by.dig(:name).sort
+    result = input.sort_by.key(:name).sort
     names = result.map { |u| u[:name] }
 
     assert_equal(["Bravo", "Delta", "alpha", "charlie"], names)
@@ -38,7 +38,7 @@ class TestSortingHashes < Minitest::Test
   def test_sorting_by_string_key
     input = @string_key_users.dup
 
-    result = input.sort_by.dig("city").sort
+    result = input.sort_by.key("city").sort
     cities = result.map { |u| u["city"] }
 
     assert_equal(["LA", "NYC"], cities)

@@ -23,6 +23,7 @@ module Sortsmith
   #   mixed_data.sort_by.dig(:name, indifferent: true).sort
   #   # => handles both key types gracefully
   #
+  #
   class Sorter
     ##
     # Initialize a new Sorter instance
@@ -66,6 +67,13 @@ module Sortsmith
       @extractors << {method: :dig, positional: identifiers, indifferent: indifferent}
       self
     end
+
+    ##
+    # Alias for #dig - extracts values from objects using hash keys or object methods.
+    #
+    # Provides a more semantic alternative to #dig for key-based extraction.
+    #
+    alias_method :key, :dig
 
     ############################################################################
     # Modifiers
