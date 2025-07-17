@@ -25,6 +25,12 @@ module Sortsmith
   #
   #
   class Sorter
+    ##
+    # Converts a hash's keys to symbols
+    #
+    # @param item [Hash] The hash whose keys will be transformed.
+    # @return [Hash] A new hash with all keys converted to symbols.
+    #
     INDIFFERENT_KEYS_TRANSFORM = ->(item) { item.transform_keys(&:to_sym) }
 
     ##
