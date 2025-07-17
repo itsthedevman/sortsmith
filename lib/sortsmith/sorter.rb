@@ -236,6 +236,10 @@ module Sortsmith
 
     private
 
+    def try_to_sym(item)
+      item.respond_to?(:to_sym) ? item.to_sym : item
+    end
+
     ##
     # Apply the complete pipeline of steps to two items for comparison
     #
