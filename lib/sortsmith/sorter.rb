@@ -60,9 +60,6 @@ module Sortsmith
     # @example Mixed key types
     #   users.sort_by.dig(:name, indifferent: true).sort
     #
-    # @example Object method calls
-    #   objects.sort_by.dig(:calculate_score).sort
-    #
     def dig(*identifiers, indifferent: false)
       @extractors << {method: :dig, positional: identifiers, indifferent: indifferent}
       self
