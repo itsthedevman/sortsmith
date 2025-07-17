@@ -25,6 +25,8 @@ module Sortsmith
   #
   #
   class Sorter
+    INDIFFERENT_KEYS_TRANSFORM = ->(item) { item.transform_keys(&:to_sym) }
+
     ##
     # Initialize a new Sorter instance
     #
@@ -61,14 +63,17 @@ module Sortsmith
     #   users.sort_by.dig(:name, indifferent: true).sort
     #
     def dig(*identifiers, indifferent: false)
-      @extractors << {method: :dig, positional: identifiers, indifferent: indifferent}
+      if indifferent
+        identifiers = identifiers.map(&:to_sym)
+        before_extract = INDIFFERENT_KEYS_TRANSFORM
+      end
+
+      @extractors << {method: :dig, positional: identifiers, before_extract:}
       self
     end
 
     ##
     # Alias for #dig - extracts values from objects using hash keys or object methods.
-    #
-    # Provides a more semantic alternative to #dig for key-based extraction.
     #
     alias_method :key, :dig
 
@@ -229,10 +234,6 @@ module Sortsmith
 
     private
 
-    def try_to_sym(item)
-      item.respond_to?(:to_sym) ? item.to_sym : item
-    end
-
     ##
     # Apply the complete pipeline of steps to two items for comparison
     #
@@ -285,38 +286,28 @@ module Sortsmith
     # @return [Array<Object, Object>] Transformed items
     #
     def apply_step(step, item_a, item_b)
-      method = step[:method]
-      positional = step[:positional] || []
-      indifferent = step[:indifferent] || false
-
-      # For indifferent key access, normalize all positional args to symbols
-      if indifferent
-        positional = positional.map { |i| i.respond_to?(:to_sym) ? i.to_sym : i }
-      end
-
-      item_a = extract_value_from(item_a, method, positional, indifferent)
-      item_b = extract_value_from(item_b, method, positional, indifferent)
+      item_a = extract_value_from(item_a, **step)
+      item_b = extract_value_from(item_b, **step)
 
       [item_a, item_b]
     end
 
     ##
-    # Extracts a value from an object using the specified method and parameters.
+    # Extracts a value from an object by invoking a specified method with optional arguments.
     #
-    # @param item [Object] the object to extract a value from
-    # @param method [Symbol, String] the method name to call on the object
-    # @param positional [Array] positional arguments to pass to the method
-    # @param indifferent [Boolean] whether to normalize hash keys to symbols for indifferent access
+    # @param item [Object] The object from which to extract the value.
+    # @param method [Symbol, String] The method to call on the object.
+    # @param positional [Array] Optional positional arguments to pass to the method.
+    # @param keyword [Hash] Optional keyword arguments to pass to the method.
+    # @param before_extract [Proc, nil] Optional proc to preprocess the item before extraction.
+    # @return [Object, String] The result of the method call, or the string representation
+    #                          of the item if the method is not available.
     #
-    # @return [Object] the extracted value, or the string representation of the item
-    #
-    def extract_value_from(item, method, positional, indifferent)
+    def extract_value_from(item, method:, positional: [], keyword: {}, before_extract: nil)
       return item.to_s unless item.respond_to?(method)
 
-      # For hash objects with indifferent access, normalize keys to symbols
-      item = item.transform_keys(&:to_sym) if indifferent
-
-      item.public_send(method, *positional)
+      item = before_extract.call(item) if before_extract
+      item.public_send(method, *positional, **keyword)
     end
   end
 end
