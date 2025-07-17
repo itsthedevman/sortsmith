@@ -83,6 +83,36 @@ module Sortsmith
     #
     alias_method :key, :dig
 
+    ##
+    # Extract values by calling methods on objects
+    #
+    # Enables chainable sorting by calling methods on each object in the collection.
+    # Supports method calls with positional and keyword arguments. Falls back to
+    # string conversion for objects that don't respond to the method.
+    #
+    # @param method_name [Symbol, String] The method name to call on each object
+    # @param positional [Array] Positional arguments to pass to the method
+    # @param keyword [Hash] Keyword arguments to pass to the method
+    #
+    # @return [Sorter] Returns self for method chaining
+    #
+    # @example Basic method sorting
+    #   users.sort_by.method(:name).sort
+    #
+    # @example Method with chainable modifiers
+    #   users.sort_by.method(:full_name).insensitive.desc.sort
+    #
+    # @example Method with arguments
+    #   products.sort_by.method(:price_in, "USD").sort
+    #
+    # @example Method with keyword arguments
+    #   items.sort_by.method(:calculate_score, boost: 1.5).sort
+    #
+    def method(method_name, *positional, **keyword)
+      @extractors << {method: method_name, positional:, keyword:}
+      self
+    end
+
     ############################################################################
     # Modifiers
     ############################################################################
