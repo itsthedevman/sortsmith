@@ -208,10 +208,10 @@ module Sortsmith
     #
     def sort
       # Apply all extraction and transformation steps during comparison
-      sorted = @input.sort { |a, b| apply_steps(a, b) }
+      sorted = @input.sort { |a, b| apply_sorting(a, b) }
 
       # Apply any ordering transformations (like desc)
-      apply_ordering_steps(sorted)
+      apply_ordering(sorted)
     end
 
     ##
@@ -237,10 +237,10 @@ module Sortsmith
     #
     def sort!
       # Sort the original array in place
-      @input.sort! { |a, b| apply_steps(a, b) }
+      @input.sort! { |a, b| apply_sorting(a, b) }
 
       # Apply any ordering transformations
-      apply_ordering_steps(@input)
+      apply_ordering(@input)
     end
 
     ##
@@ -280,13 +280,13 @@ module Sortsmith
     # @param item_b [Object] Second item to compare
     # @return [Integer] Comparison result (-1, 0, 1)
     #
-    def apply_steps(item_a, item_b)
+    def apply_sorting(item_a, item_b)
       @extractors.each do |step|
-        item_a, item_b = apply_step(step, item_a, item_b)
+        item_a, item_b = apply_extractor(step, item_a, item_b)
       end
 
       @modifiers.each do |step|
-        item_a, item_b = apply_step(step, item_a, item_b)
+        item_a, item_b = apply_modifier(step, item_a, item_b)
       end
 
       # Final comparison using Ruby's spaceship operator
@@ -302,28 +302,15 @@ module Sortsmith
     # @param sorted [Array] The array to apply ordering to
     # @return [Array] The array with ordering applied
     #
-    def apply_ordering_steps(sorted)
-      @ordering.each do |step|
-        sorted.public_send(step[:method])
-      end
+    def apply_ordering(sorted)
+      @ordering.each { |step| sorted.public_send(step[:method]) }
 
       sorted
     end
 
-    ##
-    # Apply a single step to both items in the comparison
-    #
-    # Handles different step types and safely manages method calls,
-    # falling back to string conversion for non-responsive objects.
-    #
-    # @param step [Hash] Step configuration containing method and arguments
-    # @param item_a [Object] First item to transform
-    # @param item_b [Object] Second item to transform
-    # @return [Array<Object, Object>] Transformed items
-    #
-    def apply_step(step, item_a, item_b)
-      item_a = extract_value_from(item_a, **step)
-      item_b = extract_value_from(item_b, **step)
+    def apply_extractor(extractor, item_a, item_b)
+      item_a = extract_value(item_a, **extractor)
+      item_b = extract_value(item_b, **extractor)
 
       [item_a, item_b]
     end
@@ -339,10 +326,23 @@ module Sortsmith
     # @return [Object, String] The result of the method call, or the string representation
     #                          of the item if the method is not available.
     #
-    def extract_value_from(item, method:, positional: [], keyword: {}, before_extract: nil)
-      return item.to_s unless item.respond_to?(method)
+    def extract_value(item, method:, positional: [], keyword: {}, before_extract: nil)
+      return "" unless item.respond_to?(method)
 
       item = before_extract.call(item) if before_extract
+      item.public_send(method, *positional, **keyword)
+    end
+
+    def apply_modifier(modifier, item_a, item_b)
+      item_a = modify_value(item_a, **modifier)
+      item_b = modify_value(item_b, **modifier)
+
+      [item_a, item_b]
+    end
+
+    def modify_value(item, method:, positional: [], keyword: {})
+      return item.to_s unless item.respond_to?(method)
+
       item.public_send(method, *positional, **keyword)
     end
   end
