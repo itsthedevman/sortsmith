@@ -15,7 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 -->
 
-## [Unreleased]
+## [1.0.0] - 12025-08-03
+
+### 🎉 API Stability Milestone
+
+Sortsmith has reached 1.0.0! After evolving through several major API redesigns and proving itself in real projects, the core interface is now stable and ready for broader adoption.
+
+**What 1.0.0 means:**
+- **Stable API**: Method signatures and behavior are locked for semver compatibility
+- **Complete Vision**: From the verbose early days to today's clean `collection.sort_by(:name).insensitive.desc.sort`, the API finally feels right
+- **Battle Tested**: Handles the weird edge cases and mixed data types you actually encounter in real Ruby apps
+
+This represents the sorting library I always wished Ruby had built-in. Simple things are simple, complex things are possible, and it all reads like English.
 
 ### Added
 
@@ -174,7 +185,8 @@ objects.sort_by.dig(:calculate_score).sort
 - Type checking with Steep/RBS
 - GitHub Actions workflow for automated testing and type checking
 
-[unreleased]: https://github.com/itsthedevman/sortsmith/compare/v0.9.0...HEAD
+[unreleased]: https://github.com/itsthedevman/sortsmith/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/itsthedevman/sortsmith/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/itsthedevman/sortsmith/compare/v0.2.0...v0.9.0
 [0.2.0]: https://github.com/itsthedevman/sortsmith/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/itsthedevman/sortsmith/compare/v0.1.0...v0.1.1

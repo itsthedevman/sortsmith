@@ -1,7 +1,7 @@
 # Sortsmith
 
 [![Gem Version](https://badge.fury.io/rb/sortsmith.svg)](https://badge.fury.io/rb/sortsmith)
-![Ruby Version](https://img.shields.io/badge/ruby-3.0+-ruby)
+![Ruby Version](https://img.shields.io/badge/ruby-3.1+-ruby)
 [![Tests](https://github.com/itsthedevman/sortsmith/actions/workflows/main.yml/badge.svg)](https://github.com/itsthedevman/sortsmith/actions/workflows/main.yml)
 
 **Sortsmith** makes sorting Ruby collections feel natural and fun. Instead of wrestling with verbose blocks or complex comparisons, just chain together what you want in plain English.
