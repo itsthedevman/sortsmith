@@ -252,6 +252,8 @@ module Sortsmith
     # allowing for graceful handling of dynamic field selection scenarios.
     #
     # @param field [Symbol, String, nil] The field name, hash key, or method name to extract
+    # @param positional [Array] Additional positional arguments passed to extraction
+    # @param keyword [Hash] Additional keyword arguments passed to extraction
     #
     # @return [Sorter] Returns self for method chaining
     #
@@ -279,13 +281,13 @@ module Sortsmith
     # @see #method Object method extraction with arguments
     # @since 1.0.0
     #
-    def extract(field, *, **)
+    def extract(field, *positional, **keyword)
       return self if field.nil?
 
       if @input.first.respond_to?(:dig)
-        dig(field, **)
+        dig(field, **keyword)
       else
-        method(field, *, **)
+        method(field, *positional, **keyword)
       end
     end
 

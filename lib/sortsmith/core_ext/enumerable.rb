@@ -45,6 +45,8 @@ module Enumerable
   # readable and intuitive.
   #
   # @param field [Symbol, String, nil] Optional field name for direct extraction
+  # @param positional [Array] Additional positional arguments for extraction
+  # @param keyword [Hash] Additional keyword arguments for extraction
   # @param block [Proc, nil] Optional block for traditional sort_by behavior
   #
   # @return [Array, Sortsmith::Sorter] Array when block given, Sorter instance otherwise
@@ -96,12 +98,12 @@ module Enumerable
   # @see Enumerable#sort_by Original Ruby method (aliased as og_sort_by)
   # @since 1.0.0
   #
-  def sort_by(field = nil, *, **, &block)
+  def sort_by(field = nil, *positional, **keyword, &block)
     return og_sort_by(&block) if block
 
     sorter = Sortsmith::Sorter.new(self)
     return sorter if field.nil?
 
-    sorter.extract(field, *, **)
+    sorter.extract(field, *positional, **keyword)
   end
 end
