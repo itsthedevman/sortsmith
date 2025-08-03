@@ -240,6 +240,55 @@ module Sortsmith
     #
     alias_method :attribute, :method
 
+    ##
+    # Universal extraction method that intelligently chooses the appropriate extraction strategy.
+    #
+    # This method serves as the smart dispatcher for value extraction, automatically detecting
+    # whether the input collection contains hash-like objects (that respond to `dig`) or
+    # regular objects (that need method calls). It provides a unified interface regardless
+    # of the underlying data structure.
+    #
+    # When `field` is nil, returns self without adding any extractors to the pipeline,
+    # allowing for graceful handling of dynamic field selection scenarios.
+    #
+    # @param field [Symbol, String, nil] The field name, hash key, or method name to extract
+    #
+    # @return [Sorter] Returns self for method chaining
+    #
+    # @example Hash extraction (uses dig internally)
+    #   users = [{ name: "Alice" }, { name: "Bob" }]
+    #   users.sort_by.extract(:name).sort
+    #
+    # @example Object method extraction (uses method internally)
+    #   User = Struct.new(:name, :score)
+    #   users = [User.new("Alice", 92), User.new("Bob", 78)]
+    #   users.sort_by.extract(:score).sort
+    #
+    # @example Indifferent key access
+    #   mixed_data = [{ name: "Alice" }, { "name" => "Bob" }]
+    #   mixed_data.sort_by.extract(:name, indifferent: true).sort
+    #
+    # @example Graceful nil handling
+    #   field_name = might_return_nil_from_api()
+    #   users.sort_by.extract(field_name).sort  # No extraction if field_name is nil
+    #
+    # @example Chaining with modifiers
+    #   users.sort_by.extract(:name).insensitive.desc.sort
+    #
+    # @see #dig Hash and nested structure extraction
+    # @see #method Object method extraction with arguments
+    # @since 1.0.0
+    #
+    def extract(field, *, **)
+      return self if field.nil?
+
+      if @input.first.respond_to?(:dig)
+        dig(field, **)
+      else
+        method(field, *, **)
+      end
+    end
+
     ############################################################################
     # Modifiers
     ############################################################################
@@ -597,7 +646,20 @@ module Sortsmith
       end
 
       # Final comparison using Ruby's spaceship operator
-      item_a <=> item_b
+      result = item_a <=> item_b
+
+      if result.nil?
+        raise ArgumentError,
+          <<~ERROR
+            Cannot compare values during sort - this usually means your extraction returned incomparable types or you're missing an extraction method.
+            Comparing:
+              #{item_a.inspect} (#{item_a.class})
+              <=>
+              #{item_b.inspect} (#{item_b.class})
+          ERROR
+      end
+
+      result
     end
 
     ##
