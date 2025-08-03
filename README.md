@@ -267,7 +267,7 @@ api_response.sort_by.dig(:name, indifferent: true).sort
 
 - **`sort_by(field, **opts)`** - Direct field extraction (NEW!)
   - Works with hashes, objects, and any method name
-  - Supports all the same options as `dig`
+  - Supports all the same options as `dig` and `method`
 
 ### Extractors
 
@@ -313,33 +313,8 @@ The following methods execute the sort and delegate to the resulting array:
 users.sort_by(:score).desc.first(3)    # Get top 3
 users.sort_by(:name).take(5)           # Take first 5 alphabetically
 users.sort_by(:team)[0]                # First by team name
-users.sort_by(:score).count            # Total count after sorting
+users.sort_by(:score).size             # Total size after sorting
 ```
-
-## Migration from v0.2.x
-
-The v0.3.x API is more concise and intuitive:
-
-```ruby
-# v0.2.x (OLD - no longer works)
-Sortsmith::Sorter.new(users).by_key(:name).case_insensitive.desc.sort
-
-# v0.3.x (NEW)
-users.sort_by.dig(:name).insensitive.desc.sort
-
-# v0.2.x (OLD)
-Sortsmith::Sorter.new(objects).by_method(:calculate_score).sort
-
-# v0.3.x (NEW)
-objects.sort_by.dig(:calculate_score).sort
-```
-
-**Key Changes:**
-
-- `by_key` → `dig`
-- `by_method`/`by_attribute` → `dig`
-- `case_insensitive` → `insensitive` or `downcase`
-- No more manual `Sorter.new()` - just call `sort_by` without a block
 
 ## Development
 
