@@ -55,6 +55,16 @@ class TestSortingObjects < Minitest::Test
     assert_equal(["alpha", "Bravo", "charlie", "Delta"], names)
   end
 
+  # Test attribute alias
+  def test_attribute_alias
+    input = @users.dup
+
+    result = input.sort_by.attribute(:name).insensitive.sort
+    names = result.map(&:name)
+
+    assert_equal(["alpha", "Bravo", "charlie", "Delta"], names)
+  end
+
   # Test sorting by method that doesn't exist
   def test_sorting_by_missing_method
     input = @users.dup

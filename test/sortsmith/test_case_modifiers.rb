@@ -40,6 +40,15 @@ class TestCaseModifiers < Minitest::Test
     assert_equal(["date", "Cherry", "banana", "Apple"], result)
   end
 
+  # Test case_insensitive alias
+  def test_case_insensitive_alias
+    input = @mixed_case_strings.dup
+
+    result = input.sort_by.case_insensitive.reverse
+
+    assert_equal(["date", "Cherry", "banana", "Apple"], result)
+  end
+
   # Test case modifiers with hash keys
   def test_case_modifiers_with_hashes
     input = @mixed_case_hashes.dup

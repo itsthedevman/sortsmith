@@ -146,6 +146,24 @@ module Sortsmith
     alias_method :key, :dig
 
     ##
+    # Alias for {#dig} - extracts values from objects using hash keys or object methods.
+    #
+    # Provides semantic clarity when working with object fields or properties,
+    # making the sorting intent more explicit in business domain contexts.
+    #
+    # @return [Sorter] Returns self for method chaining
+    #
+    # @example Field extraction
+    #   products.sort_by.field(:price).desc.sort
+    #
+    # @example Nested field extraction
+    #   users.sort_by.field(:profile, :email).sort
+    #
+    # @see #dig The main extraction method
+    #
+    alias_method :field, :dig
+
+    ##
     # Extract values by calling methods on objects with optional arguments.
     #
     # Enables chainable sorting by calling methods on each object in the collection.
@@ -185,6 +203,24 @@ module Sortsmith
       @extractors << {method: method_name, positional:, keyword:}
       self
     end
+
+    ##
+    # Alias for {#method} - extracts values by calling methods on objects.
+    #
+    # Provides semantic clarity when working with object attributes or properties,
+    # emphasizing that you're accessing object state rather than calling behavior.
+    #
+    # @return [Sorter] Returns self for method chaining
+    #
+    # @example Attribute extraction
+    #   users.sort_by.attribute(:full_name).sort
+    #
+    # @example With arguments
+    #   reports.sort_by.attribute(:score_for, "Q1").desc.sort
+    #
+    # @see #method The main method extraction feature
+    #
+    alias_method :attribute, :method
 
     ############################################################################
     # Modifiers
@@ -231,6 +267,22 @@ module Sortsmith
     # @see #downcase The underlying transformation method
     #
     alias_method :insensitive, :downcase
+
+    ##
+    # Alias for {#downcase} - provides case-insensitive sorting.
+    #
+    # Offers explicit semantic clarity when the intent is case-insensitive comparison.
+    # More verbose than {#insensitive} but crystal clear about the behavior.
+    #
+    # @return [Sorter] Returns self for method chaining
+    #
+    # @example Explicit case-insensitive sorting
+    #   users.sort_by.dig(:name).case_insensitive.sort
+    #
+    # @see #downcase The underlying transformation method
+    # @see #insensitive The shorter alias
+    #
+    alias_method :case_insensitive, :downcase
 
     ##
     # Transform extracted values to uppercase for comparison.
