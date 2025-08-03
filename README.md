@@ -149,21 +149,23 @@ Each step builds on the previous ones, so you can mix and match based on what yo
 ### Simple Direct Syntax
 
 ```ruby
-# The most concise way for simple sorting
-words = ["banana", "Apple", "cherry"]
-words.sort_by(:to_s).insensitive.sort
-# => ["Apple", "banana", "cherry"]
+# Clean and direct for common operations
+words = ["elephant", "cat", "butterfly"]
+words.sort_by(:length).desc.sort
+# => ["butterfly", "elephant", "cat"]
 
 # Works great with hashes
 users = [
+  { name: "Cat", score: 99 },
   { name: "Charlie", score: 85 },
+  { name: "karen", score: 50 },
   { name: "Alice", score: 92 },
-  { name: "bob", score: 78 }
+  { name: "bob", score: 78 },
 ]
 
 # Get top 3 by score
 users.sort_by(:score).desc.first(3)
-# => [{ name: "Alice", score: 92 }, { name: "Charlie", score: 85 }, { name: "bob", score: 78 }]
+# => [{ name: "Cat", score: 99 }, { name: "Alice", score: 92 }, { name: "Charlie", score: 85 }]
 ```
 
 ### Object Method Sorting
@@ -265,17 +267,17 @@ api_response.sort_by.dig(:name, indifferent: true).sort
 
 ### Universal Extraction
 
-- **`sort_by(field, **opts)`** - Direct field extraction (NEW!)
+- **`sort_by(field, **opts)`\*\* - Direct field extraction (NEW!)
   - Works with hashes, objects, and any method name
   - Supports all the same options as `dig` and `method`
 
 ### Extractors
 
 - **`dig(*identifiers, indifferent: false)`** - Extract values from hashes, objects, or nested structures
-- **`method(method_name, *args, **kwargs)`** - Call methods on objects with arguments (NEW!)
-- **`key(*identifiers, **opts)`** - Alias for `dig` (semantic clarity for hash keys) (NEW!)
-- **`field(*identifiers, **opts)`** - Alias for `dig` (semantic clarity for object fields) (NEW!)
-- **`attribute(method_name, *args, **kwargs)`** - Alias for `method` (semantic clarity) (NEW!)
+- **`method(method_name, \*args, **kwargs)`\*\* - Call methods on objects with arguments (NEW!)
+- **`key(\*identifiers, **opts)`** - Alias for `dig` (semantic clarity for hash keys) (NEW!)
+- **`field(\*identifiers, **opts)`** - Alias for `dig` (semantic clarity for object fields) (NEW!)
+- **`attribute(method_name, \*args, **kwargs)`** - Alias for `method` (semantic clarity) (NEW!)
 
 ### Modifiers
 
