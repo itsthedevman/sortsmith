@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<!--
 ## [Unreleased]
 
 ### Added
@@ -12,6 +13,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Removed
+-->
+
+## [Unreleased]
+
+### Added
+
+#### Universal Field Extraction
+
+- **Direct syntax**: `sort_by(field, **opts)` - Sort by any field/method without explicit chaining
+- **Object method extraction**: `method(*args, **kwargs)` - Call methods on objects with full argument support
+- **Mixed key handling**: Enhanced `indifferent: true` support across all extractors
+
+#### Semantic Aliases for Better Readability
+
+- `key` - Alias for `dig` (emphasizes hash key extraction)
+- `field` - Alias for `dig` (emphasizes object field access)
+- `attribute` - Alias for `method` (emphasizes object attribute access)
+- `case_insensitive` - Alias for `insensitive`/`downcase` (explicit case handling)
+
+#### Seamless Enumerable Integration
+
+- **Delegated methods**: `first`, `last`, `take`, `drop`, `each`, `map`, `select`, `[]`, `size`, `count`, `length`
+- **Fluent chaining**: Sort operations flow directly into array operations without breaking
+- **Full argument support**: All delegated methods support blocks, arguments, and return appropriate types
+
+#### Enhanced Terminators
+
+- `to_a!` - Mutating version of `to_a` for consistency with `sort!`
 
 ## [0.9.0] - 12025-07-06
 
@@ -24,23 +53,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Core API Transformation
+
 - **Fluent API**: Direct extension of `Enumerable#sort_by` for natural Ruby integration
 - **Chainable Interface**: Method chaining that reads like English: `users.sort_by.dig(:name).downcase.desc.sort`
 - **Universal `dig` Method**: Single extraction method that works with hashes, objects, and nested structures
 - **Indifferent Key Access**: Handle mixed symbol/string hash keys with `dig(:name, indifferent: true)`
 
 #### New Extraction Methods
+
 - `dig(*identifiers, indifferent: false)` - Extract values from hashes, objects, or nested structures
 - Support for nested extraction: `dig(:user, :profile, :email)`
 - Automatic fallback to method calls for non-hash objects
 
 #### Enhanced Modifiers
+
 - `downcase` / `upcase` - Case transformations with automatic type checking
 - `insensitive` - Alias for `downcase` for semantic clarity
 - `asc` / `desc` - Explicit sort direction control
 - Smart modifier chaining that only affects compatible data types
 
 #### Multiple Terminators
+
 - `sort` - Returns new sorted array (non-mutating)
 - `sort!` - Mutates original array in place
 - `reverse` - Shorthand for `desc.sort`
@@ -48,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `to_a` - Alias for `sort` for semantic clarity
 
 #### Backward Compatibility
+
 - `sort_by` with block maintains original Ruby behavior
 - `sort_by` without block returns Sortsmith::Sorter instance
 - Zero breaking changes for existing Ruby code
@@ -55,16 +89,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### API Design Philosophy
+
 - **Before**: `Sortsmith::Sorter.new(collection).by_key(:name).case_insensitive.desc.sort`
 - **After**: `collection.sort_by.dig(:name).insensitive.desc.sort`
 
 #### Improved Ergonomics
+
 - No more explicit `Sorter.new()` instantiation required
 - Tab-completable method discovery
 - Natural language flow in method chains
 - Unified `dig` method replaces separate `by_key`/`by_method` methods
 
 #### Enhanced Ruby Version Support
+
 - **Restored Ruby 3.0 and 3.1 compatibility** - Previously removed in v0.2.0, now supported again
 - Full compatibility matrix: Ruby 3.0.7, 3.1.7, 3.2.8, 3.3.8, 3.4.4
 - Expanded from Ruby 3.2+ requirement back to Ruby 3.0+ for broader accessibility
@@ -72,6 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 #### Legacy API (Breaking Changes)
+
 - `by_key` method (replaced by `dig`)
 - `by_method`/`by_attribute` methods (replaced by `dig`)
 - `case_insensitive` method (replaced by `insensitive`/`downcase`)
@@ -122,11 +160,13 @@ objects.sort_by.dig(:calculate_score).sort
 ## [0.1.1] - 12025-01-15
 
 ### Changed
+
 - Improved handling of non-string objects when sorting
 
 ## [0.1.0] - 12025-01-14
 
 ### Added
+
 - Initial implementation of `Sortsmith::Sorter`
 - Support for case-insensitive sorting
 - Support for sorting by hash keys and object methods

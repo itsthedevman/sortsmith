@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
 
 rake test
+
+echo
+bundle exec yard stats --list-undoc

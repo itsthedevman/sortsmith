@@ -44,6 +44,26 @@ class TestSortingHashes < Minitest::Test
     assert_equal(["LA", "NYC"], cities)
   end
 
+  # Test key alias
+  def test_key_alias
+    input = @string_key_users.dup
+
+    result = input.sort_by.key("city").sort
+    cities = result.map { |u| u["city"] }
+
+    assert_equal(["LA", "NYC"], cities)
+  end
+
+  # Test field alias
+  def test_field_alias
+    input = @string_key_users.dup
+
+    result = input.sort_by.field("city").sort
+    cities = result.map { |u| u["city"] }
+
+    assert_equal(["LA", "NYC"], cities)
+  end
+
   # Test sorting by non-existent key (should handle gracefully)
   def test_sorting_by_missing_key
     input = @symbol_key_users.dup

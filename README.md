@@ -14,7 +14,7 @@ users.sort_by { |user| user[:name].downcase }.reverse
 users.sort_by.dig(:name).downcase.reverse
 ```
 
-Sortsmith extends Ruby's built-in `sort_by` method with a fluent, chainable API that handles the messy details so you can focus on expressing *what* you want sorted, not *how* to sort it.
+Sortsmith extends Ruby's built-in `sort_by` method with a fluent, chainable API that handles the messy details so you can focus on expressing _what_ you want sorted, not _how_ to sort it.
 
 ## Table of Contents
 
@@ -55,6 +55,7 @@ users.sort_by.dig(:name, indifferent: true).insensitive.desc.sort
 ```
 
 **Features:**
+
 - **Fluent chaining** - Reads like English
 - **Universal extraction** - Works with hashes, objects, and nested data
 - **Indifferent key access** - Handles mixed symbol/string keys automatically
@@ -83,17 +84,17 @@ $ gem install sortsmith
 
 ## Quick Start
 
-Sortsmith extends Ruby's `sort_by` method. When called without a block, it returns a chainable sorter:
+Sortsmith extends Ruby's `sort_by` method with a fluent, chainable API. Use it with or without a block for maximum flexibility:
 
 ```ruby
 require "sortsmith"
 
-# Basic string sorting
+# Direct syntax for simple cases (NEW!)
 names = ["charlie", "Alice", "bob"]
-names.sort_by.insensitive.sort
+names.sort_by(:name).insensitive.sort
 # => ["Alice", "bob", "charlie"]
 
-# Hash sorting
+# Or use the chainable API for complex scenarios
 users = [
   { name: "Charlie", age: 25 },
   { name: "Alice", age: 30 },
@@ -102,6 +103,10 @@ users = [
 
 users.sort_by.dig(:name).sort
 # => [{ name: "Alice", age: 30 }, { name: "Bob", age: 20 }, { name: "Charlie", age: 25 }]
+
+# Seamless integration with enumerable methods (NEW!)
+users.sort_by(:age).desc.first(2)
+# => [{ name: "Alice", age: 30 }, { name: "Charlie", age: 25 }]
 
 # The original sort_by with blocks still works exactly the same!
 users.sort_by { |u| u[:age] }
@@ -112,10 +117,10 @@ users.sort_by { |u| u[:age] }
 
 Sortsmith uses a simple pipeline concept where each step is **optional** except for the terminator:
 
-1. **Extract** - Get the value to sort by (`dig`) - *optional*
-2. **Transform** - Modify the value for comparison (`downcase`, `upcase`) - *optional*
-3. **Order** - Choose sort direction (`asc`, `desc`) - *optional*
-4. **Execute** - Run the sort (`sort`, `sort!`, `reverse`) - **required**
+1. **Extract** - Get the value to sort by (`dig`, `method`, etc.) - _optional_
+2. **Transform** - Modify the value for comparison (`downcase`, `upcase`, etc.) - _optional_
+3. **Order** - Choose sort direction (`asc`, `desc`) - _optional_
+4. **Execute** - Run the sort (`sort`, `sort!`, `reverse`, `to_a`, etc.) - **required**
 
 ```ruby
 collection.sort_by.dig(:field).downcase.desc.sort
@@ -125,6 +130,7 @@ collection.sort_by.dig(:field).downcase.desc.sort
 ```
 
 **Minimal example:**
+
 ```ruby
 # This works! (though not particularly useful)
 users.sort_by.sort  # Same as users.sort
@@ -140,59 +146,29 @@ Each step builds on the previous ones, so you can mix and match based on what yo
 
 ## Usage Examples
 
-### Array Sorting
+### Simple Direct Syntax
 
 ```ruby
-# Basic sorting
-words = ["banana", "Apple", "cherry"]
-words.sort_by.sort
-# => ["Apple", "banana", "cherry"]
+# Clean and direct for common operations
+words = ["elephant", "cat", "butterfly"]
+words.sort_by(:length).desc.sort
+# => ["butterfly", "elephant", "cat"]
 
-# Case-insensitive
-words.sort_by.insensitive.sort
-# => ["Apple", "banana", "cherry"]
-
-# Descending order
-words.sort_by.downcase.desc.sort
-# => ["cherry", "banana", "Apple"]
-
-# In-place mutation
-words.sort_by.insensitive.sort!
-# Modifies the original array
-```
-
-### Hash Collections
-
-```ruby
+# Works great with hashes
 users = [
-  { name: "Charlie", score: 85, team: "red" },
-  { name: "Alice", score: 92, team: "blue" },
-  { name: "bob", score: 78, team: "red" }
+  { name: "Cat", score: 99 },
+  { name: "Charlie", score: 85 },
+  { name: "karen", score: 50 },
+  { name: "Alice", score: 92 },
+  { name: "bob", score: 78 },
 ]
 
-# Sort by name (case-sensitive)
-users.sort_by.dig(:name).sort
-# => [{ name: "Alice" }, { name: "Charlie" }, { name: "bob" }]
-
-# Sort by name (case-insensitive)
-users.sort_by.dig(:name).insensitive.sort
-# => [{ name: "Alice" }, { name: "bob" }, { name: "Charlie" }]
-
-# Sort by score (descending)
-users.sort_by.dig(:score).desc.sort
-# => [{ score: 92 }, { score: 85 }, { score: 78 }]
-
-# Multiple field extraction (nested digging)
-data = [
-  { user: { profile: { name: "Charlie" } } },
-  { user: { profile: { name: "Alice" } } }
-]
-
-data.sort_by.dig(:user, :profile, :name).sort
-# => [{ user: { profile: { name: "Alice" } } }, ...]
+# Get top 3 by score
+users.sort_by(:score).desc.first(3)
+# => [{ name: "Cat", score: 99 }, { name: "Alice", score: 92 }, { name: "Charlie", score: 85 }]
 ```
 
-### Object Collections
+### Object Method Sorting
 
 ```ruby
 User = Struct.new(:name, :age, :city)
@@ -203,20 +179,59 @@ users = [
   User.new("bob", 20, "Chicago")
 ]
 
-# Sort by any method/attribute
-users.sort_by.dig(:name).insensitive.sort
+# Sort by any method or attribute
+users.sort_by.method(:name).insensitive.sort
 # => [User.new("Alice"), User.new("bob"), User.new("Charlie")]
 
-users.sort_by.dig(:age).reverse
-# => [User.new("Alice", 30), User.new("Charlie", 25), User.new("bob", 20)]
+# Or use the semantic alias
+users.sort_by.attribute(:age).desc.first
+# => User.new("Alice", 30, "LA")
 
-# Works with any object that responds to the method
-class Score
-  def calculate; rand(100); end
+# Methods with arguments work too
+class Product
+  def price_in(currency)
+    # calculation logic
+  end
 end
 
-scores = [Score.new, Score.new, Score.new]
-scores.sort_by.dig(:calculate).desc.sort
+products.sort_by.method(:price_in, "USD").sort
+```
+
+### Hash Collections with Multiple Access Patterns
+
+```ruby
+users = [
+  { name: "Charlie", score: 85, team: "red" },
+  { name: "Alice", score: 92, team: "blue" },
+  { name: "bob", score: 78, team: "red" }
+]
+
+# Multiple semantic ways to express extraction
+users.sort_by.key(:name).insensitive.sort      # Emphasizes hash keys
+users.sort_by.field(:score).desc.sort          # Emphasizes data fields
+users.sort_by.dig(:team, :name).sort           # Nested access
+
+# Case handling with explicit naming
+users.sort_by(:name).case_insensitive.reverse
+# => [{ name: "bob" }, { name: "Charlie" }, { name: "Alice" }]
+```
+
+### Seamless Enumerable Integration
+
+```ruby
+# Chain directly into enumerable methods - no .to_a needed!
+users.sort_by(:score).desc.first(2)           # Top 2 performers
+users.sort_by(:name).each { |u| puts u }      # Iterate in order
+users.sort_by(:team).map(&:name)              # Transform sorted results
+users.sort_by(:score).select { |u| u[:active] } # Filter sorted results
+
+# Array access works too
+users.sort_by(:score).desc[0]                 # Best performer
+users.sort_by(:name)[1..3]                    # Users 2-4 alphabetically
+
+# Quick stats
+users.sort_by(:score).count                   # Total count
+users.sort_by(:team).count { |u| u[:active] } # Conditional count
 ```
 
 ### Mixed Key Types
@@ -250,17 +265,26 @@ api_response.sort_by.dig(:name, indifferent: true).sort
 
 ## API Reference
 
+### Universal Extraction
+
+- **`sort_by(field, **opts)`\*\* - Direct field extraction (NEW!)
+  - Works with hashes, objects, and any method name
+  - Supports all the same options as `dig` and `method`
+
 ### Extractors
 
 - **`dig(*identifiers, indifferent: false)`** - Extract values from hashes, objects, or nested structures
-  - Works with hash keys, object methods, and nested paths
-  - `indifferent: true` normalizes hash keys for consistent lookup across string/symbol keys
+- **`method(method_name, \*args, **kwargs)`\*\* - Call methods on objects with arguments (NEW!)
+- **`key(\*identifiers, **opts)`** - Alias for `dig` (semantic clarity for hash keys) (NEW!)
+- **`field(\*identifiers, **opts)`** - Alias for `dig` (semantic clarity for object fields) (NEW!)
+- **`attribute(method_name, \*args, **kwargs)`** - Alias for `method` (semantic clarity) (NEW!)
 
 ### Modifiers
 
 - **`downcase`** - Convert extracted strings to lowercase for comparison
 - **`upcase`** - Convert extracted strings to uppercase for comparison
 - **`insensitive`** - Alias for `downcase` (semantic clarity)
+- **`case_insensitive`** - Alias for `downcase` (explicit case handling) (NEW!)
 
 ### Ordering
 
@@ -272,32 +296,27 @@ api_response.sort_by.dig(:name, indifferent: true).sort
 - **`sort`** - Execute sort and return new array
 - **`sort!`** - Execute sort and mutate original array
 - **`to_a`** - Alias for `sort`
+- **`to_a!`** - Alias for `sort!` (NEW!)
 - **`reverse`** - Shorthand for `desc.sort`
 - **`reverse!`** - Shorthand for `desc.sort!`
 
-## Migration from v0.2.x
+### Delegated Enumerable Methods (NEW!)
 
-The v0.3.x API is more concise and intuitive:
+The following methods execute the sort and delegate to the resulting array:
+
+- **`first(n=1)`**, **`last(n=1)`** - Get first/last n elements
+- **`take(n)`**, **`drop(n)`** - Take/drop n elements
+- **`each`**, **`map`**, **`select`** - Standard enumerable operations
+- **`[](index)`** - Array access by index or range
+- **`size`**, **`count`**, **`length`** - Size information
 
 ```ruby
-# v0.2.x (OLD - no longer works)
-Sortsmith::Sorter.new(users).by_key(:name).case_insensitive.desc.sort
-
-# v0.3.x (NEW)
-users.sort_by.dig(:name).insensitive.desc.sort
-
-# v0.2.x (OLD)
-Sortsmith::Sorter.new(objects).by_method(:calculate_score).sort
-
-# v0.3.x (NEW)
-objects.sort_by.dig(:calculate_score).sort
+# All of these execute the sort first, then apply the operation
+users.sort_by(:score).desc.first(3)    # Get top 3
+users.sort_by(:name).take(5)           # Take first 5 alphabetically
+users.sort_by(:team)[0]                # First by team name
+users.sort_by(:score).size             # Total size after sorting
 ```
-
-**Key Changes:**
-- `by_key` → `dig`
-- `by_method`/`by_attribute` → `dig`
-- `case_insensitive` → `insensitive` or `downcase`
-- No more manual `Sorter.new()` - just call `sort_by` without a block
 
 ## Development
 
@@ -309,11 +328,13 @@ objects.sort_by.dig(:calculate_score).sort
 ### Setting Up the Development Environment
 
 With Nix:
+
 ```bash
 direnv allow
 ```
 
 Without Nix:
+
 ```bash
 bundle install
 ```
