@@ -55,6 +55,24 @@ module Sortsmith
     INDIFFERENT_KEYS_TRANSFORM = ->(item) { item.transform_keys(&:to_sym) }
 
     ##
+    # List of enumerable methods that are delegated to the sorted result.
+    #
+    # These methods allow seamless chaining from sorting operations to common
+    # array operations without breaking the fluent interface. Each delegated
+    # method executes the sort pipeline first, then applies the requested
+    # operation to the sorted result.
+    #
+    # @example Delegated method usage
+    #   users.sort_by.dig(:score).desc.first(3)    # Get top 3 scores
+    #   users.sort_by.dig(:name).each { |u| puts u } # Iterate in sorted order
+    #   users.sort_by.dig(:age)[0..2]               # Array slice of sorted results
+    #
+    # @since 1.0.0
+    # @api private
+    #
+    DELEGATED_METHODS = %i[first last take drop each map select [] size count length].freeze
+
+    ##
     # Initialize a new Sorter instance.
     #
     # Creates a new chainable sorter for the given collection. Typically called
@@ -417,6 +435,22 @@ module Sortsmith
     end
 
     ##
+    # Alias for {#sort!} - execute sort pipeline and mutate original array.
+    #
+    # Provides semantic clarity when the intent is to convert the sorter
+    # pipeline to an array while modifying the original collection in place.
+    #
+    # @return [Array] The original array, now sorted
+    #
+    # @example In-place array conversion
+    #   users.sort_by.dig(:name).to_a!
+    #   # users array is now sorted by name
+    #
+    # @see #sort! The main in-place sorting method
+    #
+    alias_method :to_a!, :sort!
+
+    ##
     # Shorthand for adding desc and executing sort.
     #
     # Equivalent to calling `.desc.sort` but more concise and expressive.
@@ -449,6 +483,93 @@ module Sortsmith
     #
     def reverse!
       desc.sort!
+    end
+
+    ## The following methods are automatically generated and delegate to the sorted array:
+    #
+    # @!method first(n = 1)
+    #   Get the first n elements from the sorted result
+    #   @param n [Integer] Number of elements to return
+    #   @return [Object, Array] Single element if n=1, array otherwise
+    #   @example
+    #     users.sort_by.dig(:score).desc.first    # Highest scoring user
+    #     users.sort_by.dig(:name).first(3)       # First 3 alphabetically
+    #
+    # @!method last(n = 1)
+    #   Get the last n elements from the sorted result
+    #   @param n [Integer] Number of elements to return
+    #   @return [Object, Array] Single element if n=1, array otherwise
+    #   @example
+    #     users.sort_by.dig(:age).last            # Oldest user
+    #     users.sort_by.dig(:score).last(2)       # Bottom 2 scores
+    #
+    # @!method take(n)
+    #   Take the first n elements from the sorted result
+    #   @param n [Integer] Number of elements to take
+    #   @return [Array] Array with up to n elements
+    #   @example
+    #     users.sort_by.dig(:score).desc.take(5)  # Top 5 users
+    #
+    # @!method drop(n)
+    #   Drop the first n elements from the sorted result
+    #   @param n [Integer] Number of elements to drop
+    #   @return [Array] Array with remaining elements
+    #   @example
+    #     users.sort_by.dig(:score).drop(3)       # All except top 3
+    #
+    # @!method each(&block)
+    #   Iterate over the sorted result
+    #   @yield [Object] Each element in sorted order
+    #   @return [Array, Enumerator] Sorted array if block given, enumerator otherwise
+    #   @example
+    #     users.sort_by.dig(:name).each { |user| puts user[:email] }
+    #
+    # @!method map(&block)
+    #   Transform each element of the sorted result
+    #   @yield [Object] Each element in sorted order
+    #   @return [Array, Enumerator] Transformed array if block given, enumerator otherwise
+    #   @example
+    #     users.sort_by.dig(:name).map(&:upcase)
+    #
+    # @!method select(&block)
+    #   Filter the sorted result
+    #   @yield [Object] Each element in sorted order
+    #   @return [Array, Enumerator] Filtered array if block given, enumerator otherwise
+    #   @example
+    #     users.sort_by.dig(:score).select { |u| u[:active] }
+    #
+    # @!method [](index)
+    #   Access elements by index in the sorted result
+    #   @param index [Integer, Range] Index or range to access
+    #   @return [Object, Array] Element(s) at the specified index/range
+    #   @example
+    #     users.sort_by.dig(:score).desc[0]      # Highest scoring user
+    #     users.sort_by.dig(:name)[1..3]         # Users 2-4 alphabetically
+    #
+    # @!method size
+    #   Get the number of elements in the sorted result
+    #   @return [Integer] Number of elements
+    #   @example
+    #     users.sort_by.dig(:name).size
+    #
+    # @!method count(&block)
+    #   Count elements in the sorted result, optionally with a condition
+    #   @yield [Object] Each element for conditional counting
+    #   @return [Integer] Count of elements
+    #   @example
+    #     users.sort_by.dig(:name).count                    # Total count
+    #     users.sort_by.dig(:score).count { |u| u[:active] } # Count active users
+    #
+    # @!method length
+    #   Get the number of elements in the sorted result (alias for size)
+    #   @return [Integer] Number of elements
+    #   @example
+    #     users.sort_by.dig(:name).length
+    #
+    DELEGATED_METHODS.each do |method_name|
+      define_method(method_name) do |*args, &block|
+        to_a.public_send(method_name, *args, &block)
+      end
     end
 
     private
