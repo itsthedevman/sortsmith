@@ -12,7 +12,7 @@ group :development do
 end
 
 group :development, :lint do
-  gem "standard", "~> 1.3"
+  gem "standard", "~> 1.52"
   gem "pry", "~> 0.15.2"
 end
 
