@@ -22,5 +22,5 @@ group :development, :documentation do
 end
 
 group :test do
-  gem "minitest", "~> 5.16"
+  gem "minitest", "~> 5.27"
 end
