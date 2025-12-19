@@ -5,15 +5,15 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in sortsmith.gemspec
 gemspec
 
-gem "rake", "~> 13.3"
+gem "rake"
 
 group :development do
   gem "benchmark-ips"
 end
 
 group :development, :lint do
-  gem "standard", "~> 1.3"
-  gem "pry", "~> 0.15.2"
+  gem "standard"
+  gem "pry"
 end
 
 group :development, :documentation do
@@ -22,5 +22,5 @@ group :development, :documentation do
 end
 
 group :test do
-  gem "minitest", "~> 5.16"
+  gem "minitest"
 end
