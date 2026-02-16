@@ -15,6 +15,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 -->
 
+## [1.0.1] - 12026-02-15
+
+### Added
+
+#### Nil Handling Control
+
+- **`nil_first`** - Position nil values at the beginning of sort results
+- **`nil_last`** - Explicitly position nil values at the end (default behavior)
+- Nil positioning is independent of `asc`/`desc` modifiers for predictable behavior
+- Graceful handling of nil values during comparison (should be no more comparison errors)
+
+### Changed
+
+#### Internal Implementation
+
+- **Major performance improvement**: Refactored sorting to use Schwartzian Transform (extract once, sort, map back) instead of comparison sort
+  - Reduced overhead from ~65x slower to ~5.9x slower compared to native Ruby sort (measured on Ruby 3.2.9, AMD Ryzen 7 3700X, 32GB RAM)
+  - ~11x speedup for typical use cases
+  - Tests now run 4.4x faster
+- Refactored `asc`/`desc` from array ordering to comparison-time flag for better performance and consistency
+- Improved nil comparison logic to handle edge cases consistently
+
+### Fixed
+
+- Fixed comparison errors when sorting collections with nil values
+- Fixed `NoMethodError` when trying to negate nil result in descending sorts
+
+
 ## [1.0.0] - 12025-08-03
 
 ### 🎉 API Stability Milestone
@@ -185,7 +213,8 @@ objects.sort_by.dig(:calculate_score).sort
 - Type checking with Steep/RBS
 - GitHub Actions workflow for automated testing and type checking
 
-[unreleased]: https://github.com/itsthedevman/sortsmith/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/itsthedevman/sortsmith/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/itsthedevman/sortsmith/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/itsthedevman/sortsmith/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/itsthedevman/sortsmith/compare/v0.2.0...v0.9.0
 [0.2.0]: https://github.com/itsthedevman/sortsmith/compare/v0.1.1...v0.2.0

@@ -32,6 +32,14 @@ module Sortsmith
   #   users.sort_by.method(:missing_email).sort
   #   # => preserves original order when method doesn't exist
   #
+  # @example Nil value handling
+  #   users = [{name: "Bob"}, {name: nil}, {name: "Alice"}]
+  #   users.sort_by.dig(:name).nil_first.sort
+  #   # => [{name: nil}, {name: "Alice"}, {name: "Bob"}]
+  #
+  #   users.sort_by.dig(:name).nil_last.desc.sort
+  #   # => [{name: "Bob"}, {name: "Alice"}, {name: nil}]
+  #
   # @see Enumerable#sort_by The enhanced sort_by method
   # @since 0.9.0
   #
@@ -91,7 +99,8 @@ module Sortsmith
       @input = input
       @extractors = []
       @modifiers = []
-      @ordering = []
+      @descending = false
+      @nil_first = false
     end
 
     ############################################################################
@@ -393,7 +402,7 @@ module Sortsmith
     #   users.sort_by.dig(:name).desc.asc.sort  # ends up ascending
     #
     def asc
-      @ordering << {method: :sort!}
+      @descending = false
       self
     end
 
@@ -414,7 +423,79 @@ module Sortsmith
     #   # => Case-insensitive, reverse alphabetical
     #
     def desc
-      @ordering << {method: :reverse!}
+      @descending = true
+      self
+    end
+
+    ##
+    # Position nil values at the beginning of sort results.
+    #
+    # By default, nil values sort last (matching SQL/database conventions).
+    # This modifier overrides that behavior to place nils first, regardless
+    # of sort direction (asc/desc).
+    #
+    # The nil positioning is independent of asc/desc modifiers, meaning
+    # nil_first with desc will show nils first, then non-nil values in
+    # descending order.
+    #
+    # @return [Sorter] Returns self for method chaining
+    #
+    # @example Basic nil_first usage
+    #   users = [
+    #     {name: "Bob"},
+    #     {name: nil},
+    #     {name: "Alice"}
+    #   ]
+    #   users.sort_by.dig(:name).nil_first.sort
+    #   # => [{name: nil}, {name: "Alice"}, {name: "Bob"}]
+    #
+    # @example Combining with desc
+    #   users.sort_by.dig(:name).nil_first.desc.sort
+    #   # => [{name: nil}, {name: "Bob"}, {name: "Alice"}]
+    #   # Nils first, then descending order
+    #
+    # @example With case modifiers
+    #   users.sort_by.dig(:name).insensitive.nil_first.sort
+    #   # => Case-insensitive sort with nils first
+    #
+    # @see #nil_last To explicitly position nils at the end
+    #
+    def nil_first
+      @nil_first = true
+      self
+    end
+
+    ##
+    # Position nil values at the end of sort results (explicit default).
+    #
+    # This is the default behavior, but can be used for explicitness or to
+    # override a previous nil_first call in a chain. Nil values will appear
+    # last regardless of sort direction (asc/desc).
+    #
+    # @return [Sorter] Returns self for method chaining
+    #
+    # @example Explicit nil_last
+    #   users = [
+    #     {name: "Bob"},
+    #     {name: nil},
+    #     {name: "Alice"}
+    #   ]
+    #   users.sort_by.dig(:name).nil_last.sort
+    #   # => [{name: "Alice"}, {name: "Bob"}, {name: nil}]
+    #
+    # @example Overriding nil_first
+    #   users.sort_by.dig(:name).nil_first.nil_last.sort
+    #   # => Last setting wins: nils appear last
+    #
+    # @example With desc
+    #   users.sort_by.dig(:name).nil_last.desc.sort
+    #   # => [{name: "Bob"}, {name: "Alice"}, {name: nil}]
+    #   # Descending order, then nils last
+    #
+    # @see #nil_first To position nils at the beginning
+    #
+    def nil_last
+      @nil_first = false
       self
     end
 
@@ -439,11 +520,53 @@ module Sortsmith
     #   result = users.sort_by.dig(:name, indifferent: true).insensitive.desc.sort
     #
     def sort
-      # Apply all extraction and transformation steps during comparison
-      sorted = @input.sort { |a, b| apply_sorting(a, b) }
+      # Schwartzian Transform: extract once (O(n)), sort (O(n log n)), map back (O(n))
 
-      # Apply any ordering transformations (like desc)
-      apply_ordering(sorted)
+      # Step 1: Pair each item with its extracted sort value
+      pairs = @input.map { |item| [extract_and_transform(item), item] }
+
+      # Step 2: Partition nils so we can use C-level sort_by on non-nil values
+      nil_pairs, non_nil_pairs = pairs.partition { |v, _| v.nil? }
+
+      # Step 3: Sort non-nil values using Ruby's native sort_by (runs in C)
+      begin
+        non_nil_pairs.sort_by! { |v, _| v }
+      rescue ArgumentError
+        # Re-raise with a more helpful error message
+        # Find the first pair of incomparable values for the message
+        non_nil_pairs.each_cons(2) do |(val_a, _), (val_b, _)|
+          result = val_a <=> val_b
+          next unless result.nil?
+
+          # <=> returned nil - incomparable types
+          raise ArgumentError, <<~ERROR
+            Cannot compare values during sort - the values are incomparable types.
+            This usually means your extraction returned mixed types or you're missing an extraction method.
+            Comparing:
+              #{val_a.inspect} (#{val_a.class})
+              <=>
+              #{val_b.inspect} (#{val_b.class})
+          ERROR
+        rescue ArgumentError
+          # <=> raised instead of returning nil
+          raise ArgumentError, <<~ERROR
+            Cannot compare values during sort - the <=> operator raised an exception.
+            This usually means the class doesn't implement <=>, has a buggy implementation, or you're missing an extraction method.
+            Comparing:
+              #{val_a.inspect} (#{val_a.class})
+              <=>
+              #{val_b.inspect} (#{val_b.class})
+          ERROR
+        end
+      end
+
+      non_nil_pairs.reverse! if @descending
+
+      # Step 4: Combine based on nil positioning
+      result = @nil_first ? nil_pairs.concat(non_nil_pairs) : non_nil_pairs.concat(nil_pairs)
+
+      # Step 5: Strip the sort values, keeping only the original items
+      result.map! { |_, item| item }
     end
 
     ##
@@ -478,11 +601,8 @@ module Sortsmith
     #   result = users.sort_by.dig(:name).sort!.first(10)
     #
     def sort!
-      # Sort the original array in place
-      @input.sort! { |a, b| apply_sorting(a, b) }
-
-      # Apply any ordering transformations
-      apply_ordering(@input)
+      sorted = sort
+      @input.replace(sorted)
     end
 
     ##
@@ -626,26 +746,47 @@ module Sortsmith
     private
 
     ##
-    # Apply the complete pipeline of steps to two items for comparison.
+    # Extract and transform a single item through the full pipeline.
     #
-    # Iterates through all extraction and transformation steps in order,
-    # applying each one to both items in sequence. This creates the values
-    # that will be compared using Ruby's spaceship operator.
+    # Applies all extractors and modifiers to produce the final value
+    # that will be used for sorting comparisons.
     #
-    # @param item_a [Object] First item to compare
-    # @param item_b [Object] Second item to compare
+    # @param item [Object] The item to process
+    # @return [Object] The extracted and transformed value
+    #
+    # @api private
+    #
+    def extract_and_transform(item)
+      value = item
+
+      @extractors.each do |extractor|
+        value = extract_value(value, **extractor)
+      end
+
+      @modifiers.each do |modifier|
+        value = modify_value(value, **modifier)
+      end
+
+      value
+    end
+
+    ##
+    # Compare two extracted values according to nil positioning and sort direction.
+    #
+    # Handles nil values specially and applies the @descending flag to non-nil comparisons.
+    #
+    # @param item_a [Object] First value to compare
+    # @param item_b [Object] Second value to compare
     # @return [Integer] Comparison result (-1, 0, 1)
     #
     # @api private
     #
-    def apply_sorting(item_a, item_b)
-      @extractors.each do |extractor|
-        item_a, item_b = apply_extractor(extractor, item_a, item_b)
-      end
-
-      @modifiers.each do |modifier|
-        item_a, item_b = apply_modifier(modifier, item_a, item_b)
-      end
+    def compare_values(item_a, item_b)
+      # Handle nil values specially before comparison
+      # nil_first/nil_last positioning is absolute and not affected by asc/desc
+      return 0 if item_a.nil? && item_b.nil?
+      return @nil_first ? -1 : 1 if item_a.nil?
+      return @nil_first ? 1 : -1 if item_b.nil?
 
       # Final comparison using Ruby's spaceship operator
       result = item_a <=> item_b
@@ -661,46 +802,7 @@ module Sortsmith
           ERROR
       end
 
-      result
-    end
-
-    ##
-    # Apply ordering transformations to the sorted array.
-    #
-    # Executes any ordering steps (like desc) that affect the final
-    # arrangement of the sorted results. This happens after the sort
-    # comparison is complete.
-    #
-    # @param sorted [Array] The array to apply ordering to
-    # @return [Array] The array with ordering applied
-    #
-    # @api private
-    #
-    def apply_ordering(sorted)
-      @ordering.each { |step| sorted.public_send(step[:method]) }
-
-      sorted
-    end
-
-    ##
-    # Apply an extraction step to both comparison items.
-    #
-    # Extraction steps pull values out of objects (like hash keys or method calls)
-    # that will be used for comparison. When extraction fails, returns empty
-    # strings to preserve original ordering.
-    #
-    # @param extractor [Hash] Extraction step configuration
-    # @param item_a [Object] First item to extract from
-    # @param item_b [Object] Second item to extract from
-    # @return [Array<Object, Object>] Extracted values for comparison
-    #
-    # @api private
-    #
-    def apply_extractor(extractor, item_a, item_b)
-      item_a = extract_value(item_a, **extractor)
-      item_b = extract_value(item_b, **extractor)
-
-      [item_a, item_b]
+      @descending ? -result : result
     end
 
     ##
@@ -720,31 +822,10 @@ module Sortsmith
     # @api private
     #
     def extract_value(item, method:, positional: [], keyword: {}, before_extract: nil)
-      return "" unless item.respond_to?(method)
-
       item = before_extract.call(item) if before_extract
       item.public_send(method, *positional, **keyword)
-    end
-
-    ##
-    # Apply a modification step to both comparison items.
-    #
-    # Modification steps transform values for comparison (like case changes).
-    # Both items are processed with the same transformation to ensure
-    # consistent comparison behavior.
-    #
-    # @param modifier [Hash] Modification step configuration
-    # @param item_a [Object] First item to modify
-    # @param item_b [Object] Second item to modify
-    # @return [Array<Object, Object>] Modified values for comparison
-    #
-    # @api private
-    #
-    def apply_modifier(modifier, item_a, item_b)
-      item_a = modify_value(item_a, **modifier)
-      item_b = modify_value(item_b, **modifier)
-
-      [item_a, item_b]
+    rescue NoMethodError
+      ""
     end
 
     ##
@@ -763,9 +844,9 @@ module Sortsmith
     # @api private
     #
     def modify_value(item, method:, positional: [], keyword: {})
-      return item.to_s unless item.respond_to?(method)
-
       item.public_send(method, *positional, **keyword)
+    rescue NoMethodError
+      item.to_s
     end
   end
 end

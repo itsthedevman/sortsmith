@@ -85,13 +85,16 @@ class TestSortingHashes < Minitest::Test
     assert_equal([20, 25, 30, 35], ages)
   end
 
-  # Test mixed key types without any helpers
+  # Test mixed key types without any helpers - missing keys return nil and sort last
   def test_sorting_mixed_key_types_raw
     input = @mixed_key_chaos.dup
 
-    assert_raises(ArgumentError, "comparison of Hash with Hash failed") do
-      input.sort_by.dig(:age).sort
-    end
+    # dig(:age) returns: [25, nil, nil, 28] for the mixed key data
+    # nil values sort last, so we get: 25, 28, nil, nil
+    result = input.sort_by.dig(:age).sort
+    ages = result.map { |u| u[:age] || u["age"] }
+
+    assert_equal([25, 28, 30, 35], ages)
   end
 
   # Test indifferent_keys modifier - the lazy developer's salvation!

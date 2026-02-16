@@ -11,7 +11,7 @@
 users.sort_by { |user| user[:name].downcase }.reverse
 
 # Write this!
-users.sort_by.dig(:name).downcase.reverse
+users.sort_by(:name).downcase.reverse
 ```
 
 Sortsmith extends Ruby's built-in `sort_by` method with a fluent, chainable API that handles the messy details so you can focus on expressing _what_ you want sorted, not _how_ to sort it.
@@ -46,12 +46,19 @@ users.sort_by { |u| (u[:name] || "").downcase }.reverse
 
 # What about mixed string/symbol keys?
 users.sort_by { |u| (u[:name] || u["name"] || "").downcase }.reverse
+
+# Need nils first instead of last?
+nils, non_nils = users.partition { |u| u[:name].nil? }
+nils + non_nils.sort_by { |u| u[:name].downcase }
 ```
 
 Sortsmith handles all the edge cases and gives you a clean, readable API:
 
 ```ruby
-users.sort_by.dig(:name, indifferent: true).insensitive.desc.sort
+users.sort_by.dig(:name).insensitive.desc.sort
+
+# With nils first
+users.sort_by.dig(:name).insensitive.nil_first.sort
 ```
 
 **Features:**
@@ -59,7 +66,7 @@ users.sort_by.dig(:name, indifferent: true).insensitive.desc.sort
 - **Fluent chaining** - Reads like English
 - **Universal extraction** - Works with hashes, objects, and nested data
 - **Indifferent key access** - Handles mixed symbol/string keys automatically
-- **Nil-safe** - Graceful handling of missing data
+- **Nil-safe** - Graceful handling of missing data with control over nil positioning
 - **Minimal overhead** - Extends existing Ruby methods without breaking compatibility
 
 ## Installation
@@ -89,7 +96,7 @@ Sortsmith extends Ruby's `sort_by` method with a fluent, chainable API. Use it w
 ```ruby
 require "sortsmith"
 
-# Direct syntax for simple cases (NEW!)
+# Direct syntax for simple cases
 names = ["charlie", "Alice", "bob"]
 names.sort_by(:name).insensitive.sort
 # => ["Alice", "bob", "charlie"]
@@ -104,7 +111,7 @@ users = [
 users.sort_by.dig(:name).sort
 # => [{ name: "Alice", age: 30 }, { name: "Bob", age: 20 }, { name: "Charlie", age: 25 }]
 
-# Seamless integration with enumerable methods (NEW!)
+# Seamless integration with enumerable methods
 users.sort_by(:age).desc.first(2)
 # => [{ name: "Alice", age: 30 }, { name: "Charlie", age: 25 }]
 
@@ -267,24 +274,51 @@ api_response.sort_by.dig(:name, indifferent: true).sort
 
 ### Universal Extraction
 
-- **`sort_by(field, **opts)`\*\* - Direct field extraction (NEW!)
+- **`sort_by(field, **opts)`** - Direct field extraction
   - Works with hashes, objects, and any method name
   - Supports all the same options as `dig` and `method`
 
 ### Extractors
 
 - **`dig(*identifiers, indifferent: false)`** - Extract values from hashes, objects, or nested structures
-- **`method(method_name, \*args, **kwargs)`\*\* - Call methods on objects with arguments (NEW!)
-- **`key(\*identifiers, **opts)`** - Alias for `dig` (semantic clarity for hash keys) (NEW!)
-- **`field(\*identifiers, **opts)`** - Alias for `dig` (semantic clarity for object fields) (NEW!)
-- **`attribute(method_name, \*args, **kwargs)`** - Alias for `method` (semantic clarity) (NEW!)
+- **`method(method_name, *args, **kwargs)`** - Call methods on objects with arguments
+- **`key(*identifiers, **opts)`** - Alias for `dig` (semantic clarity for hash keys)
+- **`field(*identifiers, **opts)`** - Alias for `dig` (semantic clarity for object fields)
+- **`attribute(method_name, *args, **kwargs)`** - Alias for `method` (semantic clarity)
 
 ### Modifiers
 
 - **`downcase`** - Convert extracted strings to lowercase for comparison
 - **`upcase`** - Convert extracted strings to uppercase for comparison
 - **`insensitive`** - Alias for `downcase` (semantic clarity)
-- **`case_insensitive`** - Alias for `downcase` (explicit case handling) (NEW!)
+- **`case_insensitive`** - Alias for `downcase` (explicit case handling)
+
+### Nil Handling (NEW!)
+
+- **`nil_first`** - Position nil values at the beginning of results
+- **`nil_last`** - Position nil values at the end of results (default)
+
+```ruby
+users = [
+  { name: "Bob" },
+  { name: nil },
+  { name: "Alice" }
+]
+
+# Default: nils last
+users.sort_by.dig(:name).sort
+# => [{ name: "Alice" }, { name: "Bob" }, { name: nil }]
+
+# Nils first
+users.sort_by.dig(:name).nil_first.sort
+# => [{ name: nil }, { name: "Alice" }, { name: "Bob" }]
+
+# Nil positioning is independent of sort direction
+users.sort_by.dig(:name).nil_first.desc.sort
+# => [{ name: nil }, { name: "Bob" }, { name: "Alice" }]
+```
+
+**Note**: Nil positioning is independent of `asc`/`desc` modifiers. `nil_first` always places nils at the beginning, and `nil_last` always places them at the end, regardless of whether the non-nil values are sorted ascending or descending.
 
 ### Ordering
 
@@ -296,11 +330,11 @@ api_response.sort_by.dig(:name, indifferent: true).sort
 - **`sort`** - Execute sort and return new array
 - **`sort!`** - Execute sort and mutate original array
 - **`to_a`** - Alias for `sort`
-- **`to_a!`** - Alias for `sort!` (NEW!)
+- **`to_a!`** - Alias for `sort!`
 - **`reverse`** - Shorthand for `desc.sort`
 - **`reverse!`** - Shorthand for `desc.sort!`
 
-### Delegated Enumerable Methods (NEW!)
+### Delegated Enumerable Methods
 
 The following methods execute the sort and delegate to the resulting array:
 
@@ -344,6 +378,31 @@ bundle install
 ```bash
 bundle exec rake test
 ```
+
+### Benchmarks
+
+Run performance benchmarks to compare Sortsmith with native Ruby:
+
+```bash
+# Quick benchmark
+bundle exec rake benchmark
+
+# Full benchmark suite
+bundle exec rake benchmark:full
+```
+
+#### Performance
+
+Sortsmith prioritizes developer ergonomics and code readability over raw performance. Benchmarks show approximately **5.7x-6.5x slower** than native Ruby `sort_by` for typical use cases:
+
+- Basic sorting: **5.75x slower**
+- Case-insensitive + descending: **5.65x slower**
+- With nil values: **6.06x slower**
+- Top N selection: **6.50x slower**
+
+*Benchmarked on Ruby 3.2.9, AMD Ryzen 7 3700X 8-Core Processor, 32GB RAM*
+
+The performance overhead is typically measured in microseconds for small to medium datasets, making it negligible for most real-world applications where code clarity and maintainability are more important than micro-optimizations.
 
 ### Code Style
 

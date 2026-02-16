@@ -185,14 +185,12 @@ class TestDirectSyntax < Minitest::Test
       {name: "Bob", email: "bob@test.com"}
     ]
 
-    # Should fail gracefully when trying to compare nil with string
-    error = assert_raises(ArgumentError) do
-      users_with_nil.sort_by(:email).sort
-    end
+    # nil values should sort last
+    result = users_with_nil.sort_by(:email).sort
+    names = result.map { |u| u[:name] }
 
-    assert_match(/Cannot compare values during sort/, error.message)
-    assert_match(/nil \(NilClass\)/, error.message)
-    assert_match(/String/, error.message)
+    # bob@test.com < charlie@test.com, then nil last
+    assert_equal(["Bob", "Charlie", "Alice"], names)
   end
 
   # Test direct syntax equivalent to dig

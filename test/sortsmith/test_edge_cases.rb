@@ -12,9 +12,16 @@ class TestEdgeCases < Minitest::Test
       {}
     ]
 
-    assert_raises(ArgumentError, "comparison of Hash with Hash failed") do
-      input.sort_by.dig(:name).reverse
-    end
+    # nil_last is default, and is independent of asc/desc
+    # With desc: Charlie, Bob, Alice, nil, nil (values descending, nils still last)
+    result = input.sort_by.dig(:name).reverse
+    names = result.map { |i| i[:name] }
+
+    # Non-nil values in descending order, then nils (nil_last is independent of desc)
+    assert_equal("Bob", names[0])
+    assert_equal("Alice", names[1])
+    assert_nil(names[2])
+    assert_nil(names[3])
   end
 
   # Test sorting mixed data types
