@@ -4,6 +4,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs-ruby.url = "github:bobvanderlinden/nixpkgs-ruby";
+    nixpkgs-ruby.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -11,19 +13,19 @@
       self,
       nixpkgs,
       flake-utils,
+      nixpkgs-ruby,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        ruby = nixpkgs-ruby.packages.${system}."ruby-3.2.9";
       in
       {
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            (ruby_3_2.override {
-              jemallocSupport = false;
-              docSupport = false;
-            })
+          buildInputs = [
+            ruby
+          ] ++ (with pkgs; [
 
             # Dependencies for native gems
             pkg-config
@@ -31,7 +33,7 @@
             readline
             zstd
             libyaml
-          ];
+          ]);
 
           shellHook = ''
             export GEM_HOME="$PWD/vendor/bundle"
